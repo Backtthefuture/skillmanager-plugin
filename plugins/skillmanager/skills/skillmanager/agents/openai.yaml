@@ -1,0 +1,4 @@
+interface:
+  display_name: "SkillManager"
+  short_description: "检查、诊断并整理本机 Agent Skills"
+  default_prompt: "使用 $skillmanager 检查我的 Skills，并打开本地管理界面。"

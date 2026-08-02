@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "packageName": "skillmanager",
+  "version": "0.4.0",
+  "sourcePackageVersion": "0.4.0",
+  "gitCommit": "b1394dd2b450656efa87dfd081a579360660f180",
+  "sourceDirty": false,
+  "sourceTreeHash": "7ed53cde8586dbba0f03b291b00e9a8f4fc4d48179875dbc08a6010f3b11e783",
+  "target": {
+    "kind": "universal-node20",
+    "supported": [
+      "darwin-arm64",
+      "darwin-x64",
+      "freebsd-x64",
+      "linux-arm-gnueabihf",
+      "linux-arm64-gnu",
+      "linux-arm64-musl",
+      "linux-riscv64-gnu",
+      "linux-x64-gnu",
+      "linux-x64-musl",
+      "win32-arm64-msvc",
+      "win32-ia32-msvc",
+      "win32-x64-msvc"
+    ],
+    "builtOn": "darwin-arm64",
+    "node": "22.23.1"
+  },
+  "artifacts": {
+    "server/index.js": "3559e29001ca8ed20e2a9de4a6abb871dc71d61e7d11d5c05f8812cd8833583f",
+    "server/index.js.LEGAL.txt": "6759293867e1b01de9592b567d1fa7c80704d658835bf811945518af48fe70b4",
+    "server/mcp/index.js": "ca0470b33bd018c5c6d4401b45dd8edb1fdd5c9dcde5d90fac3ddcf3318774a4",
+    "server/mcp/index.js.LEGAL.txt": "d2d725dfea693582bfd18d6904ab6441ed5b3887555804084ae3dc0ef51b8221",
+    "web/assets/index-6QWedi-B.css": "8b8dd83f8429f881ae0ad8b6bef0511f3b80231e1f024309ddcd61c300035f76",
+    "web/assets/index-hjDbgzmx.js": "d4be0562fb96a1a1bcdf366a7c76a2dfe9f2887cc40f1cdbca256fbcd954af2b",
+    "web/index.html": "fbb67a3b8768aead724c3023aa0987f7779b6b5fa71fad5a9e350cd998a9c48c",
+    "web/skillmanager-mark.svg": "3139423192413317d4711cf7104161706ba6d461e1496a8c4d4f9e7ce9456589"
+  }
+}

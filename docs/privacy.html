@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>隐私说明 — SkillManager</title><link rel="icon" href="assets/skillmanager-mark.svg"><link rel="stylesheet" href="styles.css"></head>
+<body><main class="legal">
+  <a class="back" href="./">← 返回 SkillManager</a>
+  <h1>隐私说明</h1><p class="meta">生效日期：2026 年 8 月 2 日 · 适用于 SkillManager v0.4.0</p>
+  <div class="notice"><strong>一句话版本：</strong>SkillManager 是本地优先软件，不运行托管数据收集服务；网络访问只发生在你主动调用的功能中。</div>
+  <h2>1. 本机读取的数据</h2><p>SkillManager 会读取你授权范围内的 Agent Skill 目录，用于识别名称、描述、文件结构、安装位置、重复关系和软链状态。MCP 默认只返回必要的元数据与诊断摘要，不返回 Skill 全文、绝对主目录路径、本地控制凭据或会话 Cookie。</p>
+  <h2>2. 本地保存的数据</h2><p>配置、操作计划、恢复快照和废纸篓记录保存在你的电脑上。Dashboard 只监听 <code>127.0.0.1</code>；打开链接带有短时、单次使用的本地会话保护。</p>
+  <h2>3. 凭据</h2><p>如果你配置 GitHub 同步，GitHub Token 会写入操作系统凭据库；普通配置文件只保存凭据引用。诊断输出会排除 Token、Cookie 和本地控制密钥。</p>
+  <h2>4. 网络访问</h2><p>盘点和本地整理不需要访问 SkillManager 托管服务器，因为不存在该类服务器。只有你主动使用 GitHub 仓库检查、上传或下载时，软件才会连接 GitHub API。GitHub 对数据的处理受其自身政策约束。</p>
+  <h2>5. 遥测与广告</h2><p>v0.4.0 不包含产品分析 SDK、广告 SDK 或后台遥测上报。公开网页由 GitHub Pages 托管，访问网页时 GitHub 可能按其政策处理常规访问日志；这与本地插件运行相互独立。</p>
+  <h2>6. 删除与控制</h2><p>你可以停止本地服务、删除插件、移除本地配置和恢复记录，或撤销 GitHub Token。SkillManager 不持有可替你删除的云端用户数据库。</p>
+  <h2>7. 联系</h2><p>隐私问题请通过 <a href="https://github.com/Backtthefuture/skillmanager-plugin/issues">公开仓库 Issues</a> 提交；请先删去路径、Token、Cookie、私有 Skill 正文和其他敏感信息。</p>
+</main></body></html>

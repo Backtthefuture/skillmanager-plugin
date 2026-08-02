@@ -1,0 +1,51 @@
+{
+  "name": "skillmanager",
+  "version": "0.4.0",
+  "description": "Inspect, organize, and safely converge local Agent Skills from Codex.",
+  "author": {
+    "name": "Backtthefuture",
+    "url": "https://github.com/Backtthefuture"
+  },
+  "homepage": "https://backtthefuture.github.io/skillmanager-plugin/",
+  "repository": "https://github.com/Backtthefuture/skillmanager-plugin",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "codex",
+    "agents",
+    "diagnostics",
+    "local-first",
+    "skill-manager",
+    "symlinks",
+    "rollback"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SkillManager",
+    "shortDescription": "Organize local Agent Skills safely",
+    "longDescription": "Use SkillManager to inventory local Agent Skills, distinguish installed Agents from compatible targets, find duplicate or weak trigger configurations, choose one canonical Skill version, preview shared-link convergence, and apply or roll back recoverable edits from a session-protected local Dashboard.",
+    "developerName": "Backtthefuture",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://backtthefuture.github.io/skillmanager-plugin/",
+    "privacyPolicyURL": "https://backtthefuture.github.io/skillmanager-plugin/privacy.html",
+    "termsOfServiceURL": "https://backtthefuture.github.io/skillmanager-plugin/terms.html",
+    "brandColor": "#FACC15",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "logoDark": "./assets/logo-dark.png",
+    "screenshots": [
+      "./assets/screenshots/dashboard-convergence.png"
+    ],
+    "defaultPrompt": [
+      "\u6253\u5f00 SkillManager\uff0c\u68c0\u67e5\u5f53\u524d\u9879\u76ee\u7684 Skill \u914d\u7f6e",
+      "\u68c0\u67e5\u6211\u7684 Skills \u662f\u5426\u91cd\u590d\u3001\u51b2\u7a81\u6216\u9002\u5408\u5408\u5e76",
+      "\u8bca\u65ad\u8fd9\u4e2a Skill \u4e3a\u4ec0\u4e48\u6ca1\u6709\u89e6\u53d1"
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

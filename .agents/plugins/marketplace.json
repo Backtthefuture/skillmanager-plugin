@@ -1,0 +1,20 @@
+{
+  "name": "backtthefuture",
+  "interface": {
+    "displayName": "Backtthefuture"
+  },
+  "plugins": [
+    {
+      "name": "skillmanager",
+      "source": {
+        "source": "local",
+        "path": "./plugins/skillmanager"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

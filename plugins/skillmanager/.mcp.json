@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "skillmanager": {
+      "command": "./bin/skillmanager-mcp.js",
+      "cwd": "."
+    }
+  }
+}

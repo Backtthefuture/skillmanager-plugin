@@ -1,0 +1,113 @@
+# Third-party notices
+
+SkillManager 的发布 bundle 包含下列生产依赖。对应许可证文本位于 `third-party-licenses/`。
+
+- @fastify/accept-negotiator@2.0.1 — MIT — LICENSE
+- @fastify/ajv-compiler@4.0.5 — MIT — LICENSE
+- @fastify/error@4.2.0 — MIT — LICENSE
+- @fastify/fast-json-stringify-compiler@5.0.3 — MIT — LICENSE
+- @fastify/forwarded@3.0.1 — MIT — LICENSE
+- @fastify/merge-json-schemas@0.2.1 — MIT — LICENSE
+- @fastify/proxy-addr@5.1.0 — MIT — LICENSE
+- @fastify/send@4.1.0 — MIT — LICENSE
+- @fastify/static@10.1.2 — MIT — LICENSE
+- @fastify/websocket@11.3.0 — MIT — LICENSE
+- @lukeed/ms@2.0.2 — MIT — license
+- @modelcontextprotocol/core@2.0.0 — MIT — LICENSE
+- @modelcontextprotocol/server@2.0.0 — MIT — LICENSE
+- @napi-rs/keyring-darwin-arm64@1.3.0 — MIT
+- @napi-rs/keyring-darwin-x64@1.3.0 — MIT
+- @napi-rs/keyring-freebsd-x64@1.3.0 — MIT
+- @napi-rs/keyring-linux-arm-gnueabihf@1.3.0 — MIT
+- @napi-rs/keyring-linux-arm64-gnu@1.3.0 — MIT
+- @napi-rs/keyring-linux-arm64-musl@1.3.0 — MIT
+- @napi-rs/keyring-linux-riscv64-gnu@1.3.0 — MIT
+- @napi-rs/keyring-linux-x64-gnu@1.3.0 — MIT
+- @napi-rs/keyring-linux-x64-musl@1.3.0 — MIT
+- @napi-rs/keyring-win32-arm64-msvc@1.3.0 — MIT
+- @napi-rs/keyring-win32-ia32-msvc@1.3.0 — MIT
+- @napi-rs/keyring-win32-x64-msvc@1.3.0 — MIT
+- @napi-rs/keyring@1.3.0 — MIT — LICENSE
+- @pinojs/redact@0.4.0 — MIT — LICENSE
+- abstract-logging@2.0.1 — MIT
+- ajv-formats@3.0.1 — MIT — LICENSE
+- ajv@8.18.0 — MIT — LICENSE
+- argparse@1.0.10 — MIT — LICENSE
+- atomic-sleep@1.0.0 — MIT — LICENSE
+- avvio@9.2.0 — MIT — LICENSE
+- balanced-match@4.0.4 — MIT — LICENSE.md
+- brace-expansion@5.0.9 — MIT — LICENSE
+- chokidar@4.0.3 — MIT — LICENSE
+- content-disposition@2.0.1 — MIT — LICENSE
+- cookie@1.1.1 — MIT — LICENSE
+- depd@2.0.0 — MIT — LICENSE
+- dequal@2.0.3 — MIT — license
+- duplexify@4.1.3 — MIT — LICENSE
+- end-of-stream@1.4.5 — MIT — LICENSE
+- escape-html@1.0.3 — MIT — LICENSE
+- esprima@4.0.1 — BSD-2-Clause — LICENSE.BSD
+- extend-shallow@2.0.1 — MIT — LICENSE
+- fast-decode-uri-component@1.0.1 — MIT — LICENSE
+- fast-deep-equal@3.1.3 — MIT — LICENSE
+- fast-json-stringify@6.3.0 — MIT — LICENSE
+- fast-json-stringify@7.0.1 — MIT — LICENSE
+- fast-querystring@1.1.2 — MIT — LICENSE
+- fast-uri@3.1.5 — BSD-3-Clause — LICENSE
+- fast-uri@4.1.2 — BSD-3-Clause — LICENSE
+- fastify-plugin@6.0.0 — MIT — LICENSE
+- fastify@5.11.0 — MIT — LICENSE
+- fastq@1.20.1 — ISC — LICENSE
+- find-my-way@9.7.0 — MIT — LICENSE
+- glob@13.0.6 — BlueOak-1.0.0 — LICENSE.md
+- gray-matter@4.0.3 — MIT — LICENSE
+- http-errors@2.0.1 — MIT — LICENSE
+- inherits@2.0.4 — ISC — LICENSE
+- ipaddr.js@2.3.0 — MIT — LICENSE
+- is-extendable@0.1.1 — MIT — LICENSE
+- js-yaml@3.15.1 — MIT — LICENSE
+- json-schema-ref-resolver@3.0.0 — MIT — LICENSE
+- json-schema-traverse@1.0.0 — MIT — LICENSE
+- kind-of@6.0.3 — MIT — LICENSE
+- light-my-request@6.6.0 — BSD-3-Clause — LICENSE
+- lru-cache@11.3.3 — BlueOak-1.0.0 — LICENSE.md
+- mime@3.0.0 — MIT — LICENSE
+- minimatch@10.2.5 — BlueOak-1.0.0 — LICENSE.md
+- minipass@7.1.3 — BlueOak-1.0.0 — LICENSE.md
+- on-exit-leak-free@2.1.2 — MIT — LICENSE
+- once@1.4.0 — ISC — LICENSE
+- path-scurry@2.0.2 — BlueOak-1.0.0 — LICENSE.md
+- pino-abstract-transport@3.0.0 — MIT — LICENSE
+- pino-std-serializers@7.1.0 — MIT — LICENSE
+- pino@10.3.1 — MIT — LICENSE
+- process-warning@4.0.1 — MIT — LICENSE
+- process-warning@5.0.0 — MIT — LICENSE
+- quick-format-unescaped@4.0.4 — MIT — LICENSE
+- readable-stream@3.6.2 — MIT — LICENSE
+- readdirp@4.1.2 — MIT — LICENSE
+- real-require@0.2.0 — MIT — LICENSE.md
+- require-from-string@2.0.2 — MIT — license
+- ret@0.5.0 — MIT — LICENSE
+- reusify@1.1.0 — MIT — LICENSE
+- rfdc@1.4.1 — MIT — LICENSE
+- safe-buffer@5.2.1 — MIT — LICENSE
+- safe-regex2@5.1.1 — MIT — LICENSE
+- safe-stable-stringify@2.5.0 — MIT — LICENSE
+- section-matter@1.0.0 — MIT — LICENSE
+- secure-json-parse@4.1.0 — BSD-3-Clause — LICENSE
+- semver@7.7.4 — ISC — LICENSE
+- set-cookie-parser@2.7.2 — MIT — LICENSE
+- setprototypeof@1.2.0 — ISC — LICENSE
+- sonic-boom@4.2.1 — MIT — LICENSE
+- split2@4.2.0 — ISC — LICENSE
+- sprintf-js@1.0.3 — BSD-3-Clause — LICENSE
+- statuses@2.0.2 — MIT — LICENSE
+- stream-shift@1.0.3 — MIT — LICENSE
+- string_decoder@1.3.0 — MIT — LICENSE
+- strip-bom-string@1.0.0 — MIT — LICENSE
+- thread-stream@4.0.0 — MIT — LICENSE
+- toad-cache@3.7.0 — MIT — LICENSE
+- toidentifier@1.0.1 — MIT — LICENSE
+- util-deprecate@1.0.2 — MIT — LICENSE
+- wrappy@1.0.2 — ISC — LICENSE
+- ws@8.21.1 — MIT — LICENSE
+- zod@4.4.3 — MIT — LICENSE

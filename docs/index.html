@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="SkillManager 是 Codex 内的本地优先 Skill 管理器：发现重复安装，规划唯一主版本，安全汇流并可回滚。">
+  <title>SkillManager — One source. Every agent.</title>
+  <link rel="icon" href="assets/skillmanager-mark.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="shell topbar">
+    <a class="brand" href="./"><img src="assets/skillmanager-mark.svg" alt=""><span>SkillManager</span></a>
+    <nav class="nav"><a href="#workflow">工作方式</a><a href="privacy.html">隐私</a><a href="support.html">支持</a><a class="button" href="#install">安装 v0.4.0</a></nav>
+  </header>
+  <main>
+    <section class="shell hero">
+      <div>
+        <div class="kicker">Codex Plugin · Local-first</div>
+        <h1>把散落的 Skills，<br>收回一个主版本。</h1>
+        <p class="hero-copy">SkillManager 在 Codex 内盘点本机 Skills，解释它们在哪些 Agent 中可用，并用“预览 → 确认 → 执行 → 回滚”整理重复副本。你的文件仍在你的电脑上。</p>
+        <div class="actions"><a class="button" href="#install">两条命令安装</a><a class="button alt" href="https://github.com/Backtthefuture/skillmanager">查看源码</a></div>
+      </div>
+      <div class="stage" aria-label="SkillManager 界面示意">
+        <div class="window"><div class="window-top"><i></i><i></i><i></i></div><div class="window-body">
+          <aside class="rail"><span>Skills</span><span class="active">软链整理</span><span>相似检查</span><span>Git 同步</span></aside>
+          <section class="panel"><div class="panel-head"><h3>整理建议</h3><span class="status">可回滚</span></div>
+            <div class="skill-row"><span class="skill-icon">S</span><span><strong>video-transcript</strong><small>3 处安装</small></span><em class="link-state">重复副本</em></div>
+            <div class="skill-row"><span class="skill-icon">S</span><span><strong>skill-creator</strong><small>2 个 Agent</small></span><em class="link-state good">共享主版本</em></div>
+            <div class="skill-row"><span class="skill-icon">S</span><span><strong>daily-review</strong><small>Codex + Claude Code</small></span><em class="link-state good">已收敛</em></div>
+          </section>
+        </div></div>
+      </div>
+    </section>
+    <section id="workflow" class="section"><div class="shell">
+      <div class="section-head"><h2>不是“一键乱改”，<br>而是四步可核对。</h2><p>默认小白模式只说人话：哪个是主版本、哪些是重复副本、整理后会影响谁。真正写入前必须生成计划，检查文件是否变化，并保留恢复入口。</p></div>
+      <div class="steps">
+        <article class="step"><span class="num">01 / DISCOVER</span><h3>发现</h3><p>扫描已存在的 Agent 目录，不把“支持某 Agent”误说成“已安装该 Agent”。</p></article>
+        <article class="step"><span class="num">02 / PREVIEW</span><h3>预览</h3><p>列出唯一主版本、将替换的副本和将建立的共享链接。</p></article>
+        <article class="step"><span class="num">03 / APPLY</span><h3>确认</h3><p>只有用户确认后才执行，并用陈旧状态检查阻止误覆盖。</p></article>
+        <article class="step"><span class="num">04 / ROLLBACK</span><h3>回滚</h3><p>保留快照或废纸篓记录，整理不满意可以恢复。</p></article>
+      </div>
+    </div></section>
+    <section class="section"><div class="shell">
+      <div class="section-head"><h2>在 Codex 里说人话，<br>在本机完成整理。</h2><p>这是隔离演示数据上的真实 SkillManager Dashboard，不是概念图。简单模式会把“可以安全整理”和“需要你决定”分开，默认不覆盖有分歧的副本。</p></div>
+      <div class="product-frame"><img src="assets/dashboard-convergence.png" alt="SkillManager Skill 整理中心真实界面"></div>
+      <p class="caption">REAL PRODUCT UI / ISOLATED FIXTURE DATA / NO PERSONAL SKILLS</p>
+    </div></section>
+    <section id="install" class="section"><div class="shell install">
+      <div><div class="kicker">Public Git Marketplace</div><h2>两条命令，装进 Codex。</h2><p class="hero-copy">要求 Node.js 20 或更高版本。安装完成后新建 Codex 任务，输入“打开 SkillManager”。不要再打开本地 <span class="mono">file://</span> 页面。</p></div>
+      <div class="code-stack"><div class="code-head"><span>TERMINAL</span><button class="copy" data-copy="#install-commands">复制全部</button></div><div id="install-commands"><div class="command"><span class="prompt">$</span><span>codex plugin marketplace add Backtthefuture/skillmanager-plugin</span></div><div class="command"><span class="prompt">$</span><span>codex plugin add skillmanager@backtthefuture</span></div></div></div>
+    </div><div class="shell proof"><article><strong>12</strong><span>个锁定的原生钥匙串目标</span></article><article><strong>3 × 2</strong><span>macOS / Ubuntu / Windows，Node 20 / 22 CI</span></article><article><strong>127.0.0.1</strong><span>Dashboard 只监听本机回环地址</span></article></div></section>
+    <section class="shell privacy-band"><div><h2>本地优先，不等于含糊其辞。</h2><p>SkillManager 不运行托管数据收集服务。只有你主动使用 GitHub 同步时才访问 GitHub；令牌存进系统凭据库，本地配置只保留引用。</p></div><a class="button" href="privacy.html">阅读隐私说明</a></section>
+  </main>
+  <footer class="shell"><a class="brand" href="./"><img src="assets/skillmanager-mark.svg" alt=""><span>SkillManager</span></a><span>MIT · v0.4.0</span><a href="terms.html">条款</a><a href="support.html">支持</a><a href="https://github.com/Backtthefuture/skillmanager-plugin">GitHub</a></footer>
+  <script src="site.js"></script>
+</body>
+</html>

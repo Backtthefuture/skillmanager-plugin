@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SkillManager</title>
+    <link rel="icon" type="image/svg+xml" href="/skillmanager-mark.svg" />
+    <style>
+      html, body { margin: 0; background: #020617; color: #e2e8f0; font-family: -apple-system, system-ui, sans-serif; }
+      #root:empty::before {
+        content: '';
+        position: fixed; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .boot {
+        position: fixed; inset: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 12px; pointer-events: none;
+      }
+      .boot .spinner {
+        width: 32px; height: 32px; border: 3px solid #1e293b; border-top-color: #facc15;
+        border-radius: 50%; animation: spin 0.8s linear infinite;
+      }
+      .boot .msg { font-size: 13px; color: #64748b; }
+      .boot .hint { font-size: 11px; color: #475569; margin-top: 8px; }
+      .boot .hint code { background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #94a3b8; }
+      .file-entry {
+        position: fixed; inset: 0; z-index: 10;
+        display: flex; align-items: center; justify-content: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at 15% 12%, rgba(250, 204, 21, 0.10), transparent 34%),
+          radial-gradient(circle at 86% 82%, rgba(34, 211, 238, 0.08), transparent 30%),
+          #020617;
+      }
+      .file-entry[hidden] { display: none; }
+      .file-card {
+        width: min(620px, 100%); padding: 30px;
+        border: 1px solid #334155; border-radius: 22px;
+        background: rgba(15, 23, 42, 0.86);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+      }
+      .file-kicker { color: #facc15; font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+      .file-card h1 { margin: 12px 0 10px; color: #f8fafc; font-size: 26px; line-height: 1.25; }
+      .file-card p { margin: 0; color: #94a3b8; font-size: 14px; line-height: 1.7; }
+      .file-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+      .file-action {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-height: 42px; padding: 0 16px; border-radius: 11px;
+        color: #0f172a; background: #facc15; font-size: 13px; font-weight: 700;
+        text-decoration: none;
+      }
+      .file-action-secondary { color: #cbd5e1; background: #1e293b; }
+      .file-command {
+        margin-top: 20px; padding: 14px 16px; border: 1px solid #334155; border-radius: 12px;
+        color: #cbd5e1; background: #020617; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .file-note { margin-top: 12px !important; color: #64748b !important; font-size: 12px !important; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      /* Hide boot once React mounts anything */
+      #root:not(:empty) ~ .boot { display: none; }
+    </style>
+    <script type="module" crossorigin src="/assets/index-hjDbgzmx.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-6QWedi-B.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <div class="boot">
+      <div class="spinner"></div>
+      <div class="msg">正在加载 SkillManager...</div>
+      <div class="hint">如果这个画面持续不消失，打开 DevTools Console 查看错误，或访问 <code>/api/debug</code></div>
+    </div>
+    <main id="file-entry" class="file-entry" hidden>
+      <section class="file-card" role="alert" aria-labelledby="file-entry-title">
+        <div class="file-kicker">SkillManager secure launcher</div>
+        <h1 id="file-entry-title">这是源码预览，不是 SkillManager Dashboard</h1>
+        <p>
+          SkillManager 必须由本地服务启动，并通过一次性会话链接打开。
+          直接打开 <code>web/index.html</code> 时，浏览器没有 API、WebSocket 和安全会话。
+        </p>
+        <div class="file-actions">
+          <a class="file-action" href="http://127.0.0.1:3456/">尝试连接默认本地服务</a>
+          <a class="file-action file-action-secondary" href="https://github.com/Backtthefuture/skillmanager">查看使用说明</a>
+        </div>
+        <div class="file-command">在 Codex 对话中输入：“打开当前项目的 SkillManager”<br />
+          CLI：skillmanager open --project &lt;项目目录&gt;
+        </div>
+        <p class="file-note">如果默认端口不是 3456，请使用 Codex 或 CLI；它们会返回实际端口和 60 秒内有效的启动链接。</p>
+      </section>
+    </main>
+    <noscript>
+      <div style="padding:24px;color:#f87171">SkillManager 需要启用 JavaScript。</div>
+    </noscript>
+    <script>
+      if (window.location.protocol === 'file:') {
+        document.querySelector('.boot')?.setAttribute('hidden', '')
+        document.getElementById('file-entry')?.removeAttribute('hidden')
+      }
+    </script>
+  </body>
+</html>

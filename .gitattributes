@@ -1,0 +1,5 @@
+plugins/skillmanager/dist/** -whitespace
+plugins/skillmanager/third-party-licenses/** -whitespace
+plugins/skillmanager/runtime/** -diff
+*.node -diff
+*.png -diff

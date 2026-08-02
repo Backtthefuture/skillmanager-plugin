@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>支持 — SkillManager</title><link rel="icon" href="assets/skillmanager-mark.svg"><link rel="stylesheet" href="styles.css"></head>
+<body><main class="legal">
+  <a class="back" href="./">← 返回 SkillManager</a>
+  <h1>支持与排错</h1><p class="meta">SkillManager Public Git Marketplace · v0.4.0</p>
+  <h2>安装</h2>
+  <pre><code>codex plugin marketplace add Backtthefuture/skillmanager-plugin
+codex plugin add skillmanager@backtthefuture</code></pre>
+  <p>安装后请新建 Codex 任务，输入“打开 SkillManager”。插件会返回一个 60 秒内有效、只能使用一次的本地链接。</p>
+  <h2>一直加载或打开了 file://</h2>
+  <ol><li>关闭旧的 <code>file://.../web/index.html</code> 标签页。</li><li>在 Codex 新任务中输入“打开 SkillManager”。</li><li>确认返回地址以 <code>http://127.0.0.1:</code> 开头。</li><li>仍失败时，让 Codex“诊断 SkillManager 本地服务”，不要公开粘贴 Cookie 或控制凭据。</li></ol>
+  <h2>确认安装状态</h2>
+  <pre><code>codex plugin marketplace list --json
+codex plugin list --json</code></pre>
+  <p>如果仓库有新版本，先执行 Marketplace 更新，再重新安装对应插件版本：</p>
+  <pre><code>codex plugin marketplace upgrade backtthefuture</code></pre>
+  <h2>提交问题</h2><p>请到 <a href="https://github.com/Backtthefuture/skillmanager-plugin/issues">skillmanager-plugin Issues</a>。建议附上操作系统、CPU、Node.js 版本、Codex 版本、复现步骤和已脱敏的错误信息。</p>
+  <div class="notice"><strong>发布前请脱敏：</strong>删除 Token、Cookie、私有 Skill 正文、用户名、完整主目录路径和私有仓库地址。</div>
+  <h2>源码与许可证</h2><p>开发源码位于 <a href="https://github.com/Backtthefuture/skillmanager">Backtthefuture/skillmanager</a>，发布仓库只保存经验证的通用 Plugin 包。许可证为 MIT。</p>
+</main></body></html>
