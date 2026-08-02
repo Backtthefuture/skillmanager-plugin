@@ -1,11 +1,11 @@
 {
   "schemaVersion": 2,
   "packageName": "skillmanager",
-  "version": "0.4.0",
-  "sourcePackageVersion": "0.4.0",
-  "gitCommit": "c130ed1820a20189cc7ccb7564f9983e30745b62",
+  "version": "0.4.1",
+  "sourcePackageVersion": "0.4.1",
+  "gitCommit": "f4a19511ee05cf69869f3995773f55b195c12e23",
   "sourceDirty": false,
-  "sourceTreeHash": "ce2331dd709009d3544935786b981ea0db04e2bc8b23b552d85b260a333ff6b8",
+  "sourceTreeHash": "77532fc54c7aa16ff1f9b44479f8ed559b5235fad1527fab34fc8b0108895a11",
   "target": {
     "kind": "universal-node20",
     "supported": [
@@ -31,8 +31,8 @@
     "server/mcp/index.js": "ca0470b33bd018c5c6d4401b45dd8edb1fdd5c9dcde5d90fac3ddcf3318774a4",
     "server/mcp/index.js.LEGAL.txt": "d2d725dfea693582bfd18d6904ab6441ed5b3887555804084ae3dc0ef51b8221",
     "web/assets/index-6QWedi-B.css": "8b8dd83f8429f881ae0ad8b6bef0511f3b80231e1f024309ddcd61c300035f76",
-    "web/assets/index-hjDbgzmx.js": "d4be0562fb96a1a1bcdf366a7c76a2dfe9f2887cc40f1cdbca256fbcd954af2b",
-    "web/index.html": "fbb67a3b8768aead724c3023aa0987f7779b6b5fa71fad5a9e350cd998a9c48c",
+    "web/assets/index-bBVNchye.js": "e68085dc73eb98cf5e5c8141e7c2494e9a99cd24d21df02bfa0c8ff8904368ad",
+    "web/index.html": "5eb5f78083eae0e9d14c647d19fe7d89e4f9bc5a0be13563f6de04daeee82556",
     "web/skillmanager-mark.svg": "3139423192413317d4711cf7104161706ba6d461e1496a8c4d4f9e7ce9456589"
   }
 }

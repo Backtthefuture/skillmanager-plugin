@@ -1,6 +1,6 @@
 {
   "name": "skillmanager",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Inspect, organize, and safely converge local Agent Skills from Codex.",
   "author": {
     "name": "Backtthefuture",

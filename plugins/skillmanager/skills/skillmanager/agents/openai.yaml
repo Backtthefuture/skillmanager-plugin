@@ -1,4 +1,7 @@
 interface:
   display_name: "SkillManager"
   short_description: "检查、诊断并整理本机 Agent Skills"
+  icon_small: "./assets/icon.png"
+  icon_large: "./assets/logo.png"
+  brand_color: "#FACC15"
   default_prompt: "使用 $skillmanager 检查我的 Skills，并打开本地管理界面。"

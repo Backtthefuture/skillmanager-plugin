@@ -1,6 +1,6 @@
 {
   "name": "skillmanager",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "SkillManager - local-first management and diagnostics for Agent Skills",
   "license": "MIT",
   "type": "module",
