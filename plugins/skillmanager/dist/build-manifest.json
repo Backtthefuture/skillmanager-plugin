@@ -3,9 +3,9 @@
   "packageName": "skillmanager",
   "version": "0.4.0",
   "sourcePackageVersion": "0.4.0",
-  "gitCommit": "b1394dd2b450656efa87dfd081a579360660f180",
+  "gitCommit": "c130ed1820a20189cc7ccb7564f9983e30745b62",
   "sourceDirty": false,
-  "sourceTreeHash": "7ed53cde8586dbba0f03b291b00e9a8f4fc4d48179875dbc08a6010f3b11e783",
+  "sourceTreeHash": "ce2331dd709009d3544935786b981ea0db04e2bc8b23b552d85b260a333ff6b8",
   "target": {
     "kind": "universal-node20",
     "supported": [

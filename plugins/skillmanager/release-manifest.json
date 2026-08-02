@@ -3,12 +3,12 @@
   "marketplace": "backtthefuture",
   "plugin": "skillmanager",
   "version": "0.4.0",
-  "builtAt": "2026-08-02T13:58:16.277Z",
+  "builtAt": "2026-08-02T14:04:13.924Z",
   "source": {
     "packageVersion": "0.4.0",
-    "gitCommit": "b1394dd2b450656efa87dfd081a579360660f180",
+    "gitCommit": "c130ed1820a20189cc7ccb7564f9983e30745b62",
     "dirty": false,
-    "treeHash": "7ed53cde8586dbba0f03b291b00e9a8f4fc4d48179875dbc08a6010f3b11e783"
+    "treeHash": "ce2331dd709009d3544935786b981ea0db04e2bc8b23b552d85b260a333ff6b8"
   },
   "target": {
     "kind": "universal-node20",
@@ -153,6 +153,6 @@
   "contents": {
     "fileCount": 131,
     "totalBytes": 30083936,
-    "sha256": "ed43c1e305333e239f439251dc71360b391134874c79c0cf63cb2be62742e138"
+    "sha256": "9deb5368fa7a8a33d76e48dcf5edb5ae863f1c47ae03ccfb55c720ec69fd8699"
   }
 }
