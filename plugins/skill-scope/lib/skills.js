@@ -46,7 +46,12 @@ export function parseFrontmatter(contents) {
   if (!match) return { name: null, description: null, agent: null }
   const get = (key) => {
     const line = match[1].match(new RegExp(`^${key}\\s*:\\s*(.+)$`, 'm'))
-    return line ? line[1].trim() : null
+    if (!line) return null
+    const value = line[1].trim()
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      return value.slice(1, -1)
+    }
+    return value
   }
   return { name: get('name'), description: get('description'), agent: get('agent') }
 }
@@ -171,6 +176,282 @@ export async function scanSkills(ctx, { threadId = null } = {}) {
       skillsmp: skills.filter((skill) => skill.source === 'skillsmp').length
     },
     skills
+  }
+}
+
+function sourcePriority(source) {
+  if (source === 'managed' || source === 'skillsmp') return 4
+  if (source === 'user') return 3
+  if (source === 'plugin') return 2
+  if (source === 'system') return 1
+  return 0
+}
+
+async function codexPluginRoots() {
+  try {
+    const output = await new Promise((resolve, reject) => {
+      execFile('codex', ['plugin', 'list', '--json'], { timeout: 10000, maxBuffer: 4 * 1024 * 1024 }, (error, stdout) => {
+        if (error) reject(error)
+        else resolve(stdout)
+      })
+    })
+    const payload = JSON.parse(output)
+    return (payload.installed || [])
+      .filter((plugin) => plugin.enabled !== false && plugin.source?.path)
+      .map((plugin) => path.resolve(plugin.source.path))
+  } catch {
+    return []
+  }
+}
+
+async function cachePluginRoots(home) {
+  const cacheRoot = path.join(home, '.codex', 'plugins', 'cache')
+  const roots = []
+  try {
+    const marketplaces = await fs.readdir(cacheRoot, { withFileTypes: true })
+    for (const marketplace of marketplaces) {
+      if (!marketplace.isDirectory()) continue
+      const marketplaceDir = path.join(cacheRoot, marketplace.name)
+      const plugins = await fs.readdir(marketplaceDir, { withFileTypes: true }).catch(() => [])
+      for (const plugin of plugins) {
+        if (!plugin.isDirectory()) continue
+        const pluginDir = path.join(marketplaceDir, plugin.name)
+        const versions = await fs.readdir(pluginDir, { withFileTypes: true }).catch(() => [])
+        for (const version of versions) {
+          if (!version.isDirectory()) continue
+          const root = path.join(pluginDir, version.name)
+          if (fsSync.existsSync(path.join(root, '.codex-plugin', 'plugin.json'))) roots.push(root)
+        }
+      }
+    }
+  } catch {
+  }
+  return roots
+}
+
+export async function pluginRootsFor(ctx) {
+  const envRoots = process.env.SKILL_SCOPE_PLUGIN_ROOTS?.split(/[:,]/).map((value) => value.trim()).filter(Boolean)
+  if (envRoots && envRoots.length > 0) {
+    return envRoots.map((value) => path.resolve(value))
+  }
+  const codexRoots = await codexPluginRoots()
+  if (codexRoots.length > 0) return codexRoots
+  return cachePluginRoots(ctx.home)
+}
+
+async function pluginSkillRoots(pluginRoot) {
+  const candidates = []
+  try {
+    const manifest = JSON.parse(await fs.readFile(path.join(pluginRoot, '.codex-plugin', 'plugin.json'), 'utf8'))
+    if (typeof manifest.skills === 'string' && manifest.skills.trim()) {
+      candidates.push(path.resolve(pluginRoot, manifest.skills.trim()))
+    }
+  } catch {
+  }
+  candidates.push(path.join(pluginRoot, 'skills'))
+  const found = []
+  for (const candidate of candidates) {
+    try {
+      const stat = await fs.stat(candidate)
+      if (stat.isDirectory() && !found.includes(candidate)) found.push(candidate)
+    } catch {
+    }
+  }
+  return found
+}
+
+async function scanDirectorySkills(dir, source, records, seen) {
+  let entries
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true })
+  } catch {
+    return
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const dirPath = path.join(dir, entry.name)
+    const meta = await readSkillMeta(dirPath)
+    if (!meta) continue
+    const record = {
+      name: meta.name,
+      description: meta.description,
+      agent: meta.agent,
+      source,
+      path: dirPath,
+      managed: source === 'managed' || source === 'skillsmp',
+      protected: PROTECTED_SKILLS.has(meta.name),
+      broken: false,
+      conflict: false
+    }
+    const priority = sourcePriority(record.source)
+    const existing = seen.get(record.name)
+    if (!existing) {
+      seen.set(record.name, { ...record, priority })
+    } else {
+      existing.conflict = true
+      if (priority > existing.priority) {
+        seen.set(record.name, { ...record, priority, conflict: true })
+      } else if (priority === existing.priority) {
+        record.conflict = true
+      }
+    }
+  }
+}
+
+export async function scanAllSkills(ctx, { threadId = null } = {}) {
+  const seen = new Map()
+  const records = []
+  const managed = managedRoot(ctx)
+
+  // 1) managed library + SkillsMP
+  await scanDirectorySkills(managed, 'managed', records, seen)
+  try {
+    const entries = await fs.readdir(managed, { withFileTypes: true })
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue
+      const marker = await sourceMarker(ctx, entry.name)
+      if (marker && seen.has(entry.name)) {
+        seen.get(entry.name).source = 'skillsmp'
+        seen.get(entry.name).managed = true
+        seen.get(entry.name).repo = marker.repo || null
+        seen.get(entry.name).installedAt = marker.installedAt || null
+      }
+    }
+  } catch {
+  }
+
+  // 2) user / system global skills (one level of subdirectories, e.g. .system/)
+  try {
+    const entries = await fs.readdir(ctx.globalRoot, { withFileTypes: true })
+    for (const entry of entries) {
+      const entryPath = path.join(ctx.globalRoot, entry.name)
+      let realPath = entryPath
+      let broken = false
+      if (entry.isSymbolicLink()) {
+        try {
+          realPath = await fs.realpath(entryPath)
+        } catch {
+          broken = true
+        }
+      }
+      if (broken) {
+        const name = normalizeSkillName(entry.name)
+        const record = {
+          name,
+          description: '(损坏的符号链接)',
+          agent: null,
+          source: 'user',
+          path: entryPath,
+          managed: false,
+          protected: PROTECTED_SKILLS.has(name),
+          broken: true,
+          conflict: false
+        }
+        const priority = 0
+        const existing = seen.get(name)
+        if (!existing) {
+          seen.set(name, { ...record, priority })
+        } else {
+          existing.conflict = true
+        }
+        continue
+      }
+      if (!entry.isDirectory() && !entry.isSymbolicLink()) continue
+      if (path.resolve(realPath).startsWith(path.resolve(managed) + path.sep)) continue
+      const directMeta = await readSkillMeta(realPath)
+      if (directMeta) {
+        const source = entry.name === '.system' ? 'system' : 'user'
+        const record = {
+          name: directMeta.name,
+          description: directMeta.description,
+          agent: directMeta.agent,
+          source,
+          path: realPath,
+          managed: false,
+          protected: PROTECTED_SKILLS.has(directMeta.name),
+          broken: false,
+          conflict: false
+        }
+        const priority = sourcePriority(source)
+        const existing = seen.get(record.name)
+        if (!existing) {
+          seen.set(record.name, { ...record, priority })
+        } else {
+          existing.conflict = true
+          if (priority > existing.priority) {
+            seen.set(record.name, { ...record, priority, conflict: true })
+          } else if (priority === existing.priority) {
+            record.conflict = true
+          }
+        }
+        continue
+      }
+      if (entry.isDirectory()) {
+        const source = entry.name === '.system' ? 'system' : 'user'
+        await scanDirectorySkills(entryPath, source, records, seen)
+      }
+    }
+  } catch {
+  }
+
+  // 3) plugin skills (codex plugin list + cache fallback)
+  const pluginRoots = await pluginRootsFor(ctx)
+  for (const pluginRoot of pluginRoots) {
+    if (!fsSync.existsSync(path.join(pluginRoot, '.codex-plugin', 'plugin.json'))) continue
+    const skillDirs = await pluginSkillRoots(pluginRoot)
+    for (const skillDir of skillDirs) {
+      await scanDirectorySkills(skillDir, 'plugin', records, seen)
+    }
+  }
+
+  const skillsList = []
+  for (const [name, record] of seen) {
+    const effective = await resolveEffective(ctx, { skill: name, threadId })
+    const globalPolicy = await loadScopePolicy(ctx, 'global', null)
+    const threadPolicy = threadId ? await loadScopePolicy(ctx, 'thread', threadId) : null
+    const globalState = globalPolicy?.enabled?.[name] ? 'enabled'
+      : globalPolicy?.disabled?.[name] ? 'disabled'
+        : 'inherit'
+    const threadState = threadPolicy?.enabled?.[name] ? 'enabled'
+      : threadPolicy?.disabled?.[name] ? 'disabled'
+        : 'inherit'
+    skillsList.push({
+      name,
+      description: record.description,
+      agent: record.agent || null,
+      source: record.source,
+      path: record.path,
+      managed: Boolean(record.managed),
+      protected: Boolean(record.protected),
+      canDelete: Boolean(record.managed) && !record.protected,
+      broken: Boolean(record.broken),
+      conflict: Boolean(record.conflict),
+      repo: record.repo || null,
+      installedAt: record.installedAt || null,
+      globalState,
+      threadState,
+      effective: { enabled: effective.enabled, source: effective.source, reason: effective.reason || null }
+    })
+  }
+  skillsList.sort((a, b) => a.name.localeCompare(b.name))
+  const bySource = {
+    system: skillsList.filter((skill) => skill.source === 'system' && !skill.broken).length,
+    plugin: skillsList.filter((skill) => skill.source === 'plugin' && !skill.broken).length,
+    user: skillsList.filter((skill) => skill.source === 'user' && !skill.broken).length,
+    managed: skillsList.filter((skill) => skill.source === 'managed' && !skill.broken).length,
+    skillsmp: skillsList.filter((skill) => skill.source === 'skillsmp' && !skill.broken).length
+  }
+  return {
+    schemaVersion: 1,
+    scannedAt: new Date().toISOString(),
+    threadId,
+    stats: {
+      total: skillsList.length,
+      bySource,
+      broken: skillsList.filter((skill) => skill.broken).length,
+      protected: skillsList.filter((skill) => skill.protected).length
+    },
+    skills: skillsList
   }
 }
 
@@ -560,6 +841,8 @@ export async function openSkillsmp({ dryRun = false } = {}) {
 export const skills = {
   SkillLibraryError,
   scanSkills,
+  scanAllSkills,
+  pluginRootsFor,
   deleteSkillPlan,
   deleteSkill,
   restoreSkill,

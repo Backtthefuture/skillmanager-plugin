@@ -26,6 +26,12 @@
 - [x] 重新加入本地 Dashboard（skill-scope 自己的实现）：`lib/server.js` + `web/`，
       仅监听 127.0.0.1，一次性 launch 会话；CLI `dashboard open|status|stop`、
       MCP `open_dashboard`；页面含 Skills/作用域/回收站/事务/审计/Doctor。
+- [x] Dashboard 弹窗显隐修复：`[hidden] { display: none !important; }` 全局规则，
+      杜绝 `.modal/.toast/.field` 等 display 类覆盖 hidden；新增 CSS 回归测试与
+      服务端 CSS 断言；提供幂等修补脚本与上游 PR 分支。
+- [x] Skills 总览全量枚举：`scanAllSkills` 覆盖系统/插件/用户/受管/SkillsMP，
+      按名称去重（managed/skillsmp > user > plugin > system），损坏链接跳过并标记冲突；
+      `/api/skills` 返回按来源拆分的 stats 与 canDelete 规则。
 
 ## 测试结果
 
@@ -87,6 +93,19 @@ skill-scope market install https://github.com/anthropics/skills.git --json
 写入 global 启用策略；随后 `skill-scope skill list --json` 立即显示
 `algorithmic-art: skillsmp: on`。同时验证了失败路径：无 SKILL.md 的仓库返回
 `SKILL_NOT_FOUND` 并清理临时目录；大仓库超时返回 `GIT_CLONE_FAILED` 并清理临时目录。
+
+### Skills 全量枚举实测（2026-08-07）
+
+真实环境启动 Dashboard 后 `/api/skills` 返回 **25 个 Skill**：
+
+- system（6）：imagegen、openai-docs、plugin-creator、review-agent、skill-creator、skill-installer
+- plugin（18）：computer-use、control-in-app-browser、documents、excel-live-control、pdf、
+  Presentations、skill-scope、skill-scope-guard、skillmanager、slack（5 个子 Skill）、
+  Spreadsheets、template-creator、visualize
+- user（1）：phd-application-planner
+
+`skill-scope-guard` 因存在指向旧版本的损坏符号链接而标记 conflict（有效插件条目保留）；
+所有 system/plugin/user 条目 `canDelete=false`，受管条目 `canDelete=true`。
 
 ## 已知限制
 

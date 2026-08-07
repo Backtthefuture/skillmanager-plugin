@@ -13,11 +13,19 @@ async function makeFixture() {
   const base = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-scope-server-'))
   const globalUser = path.join(base, '.codex', 'skills', 'user-skill')
   const managed = path.join(base, 'data', 'skills', 'managed-a')
+  const systemSkill = path.join(base, '.codex', 'skills', '.system', 'sys-skill')
+  const fakePlugin = path.join(base, 'plugins', 'fake-plugin')
   await fs.mkdir(globalUser, { recursive: true })
   await fs.mkdir(managed, { recursive: true })
+  await fs.mkdir(systemSkill, { recursive: true })
+  await fs.mkdir(path.join(fakePlugin, '.codex-plugin'), { recursive: true })
+  await fs.mkdir(path.join(fakePlugin, 'skills', 'plugin-skill'), { recursive: true })
   await fs.writeFile(path.join(globalUser, 'SKILL.md'), '---\nname: user-skill\ndescription: User skill.\n---\n# User\n', 'utf8')
   await fs.writeFile(path.join(managed, 'SKILL.md'), '---\nname: managed-a\ndescription: Managed skill.\n---\n# Managed\n', 'utf8')
-  return { base }
+  await fs.writeFile(path.join(systemSkill, 'SKILL.md'), '---\nname: sys-skill\ndescription: System skill.\n---\n# System\n', 'utf8')
+  await fs.writeFile(path.join(fakePlugin, '.codex-plugin', 'plugin.json'), JSON.stringify({ name: 'fake-plugin', version: '1.0.0', skills: './skills/' }), 'utf8')
+  await fs.writeFile(path.join(fakePlugin, 'skills', 'plugin-skill', 'SKILL.md'), '---\nname: plugin-skill\ndescription: Plugin skill.\n---\n# Plugin\n', 'utf8')
+  return { base, fakePlugin }
 }
 
 async function waitForHealth(url, timeoutMs = 15000) {
@@ -34,7 +42,7 @@ async function waitForHealth(url, timeoutMs = 15000) {
 }
 
 test('Dashboard serves pages and APIs; session launch enables plan/apply', async () => {
-  const { base } = await makeFixture()
+  const { base, fakePlugin } = await makeFixture()
   const port = 5000 + Math.floor(Math.random() * 500)
   const baseUrl = `http://127.0.0.1:${port}`
   const controlToken = 'test-control-token-0123456789abcdef'
@@ -46,6 +54,7 @@ test('Dashboard serves pages and APIs; session launch enables plan/apply', async
       SKILL_SCOPE_DASHBOARD_PORT: String(port),
       SKILL_SCOPE_CONTROL_TOKEN: controlToken,
       SKILL_SCOPE_DATA_DIR: path.join(base, 'data'),
+      SKILL_SCOPE_PLUGIN_ROOTS: fakePlugin,
       CODEX_THREAD_ID: 'thread-server'
     },
     stdio: ['ignore', 'pipe', 'pipe']
@@ -101,9 +110,15 @@ test('Dashboard serves pages and APIs; session launch enables plan/apply', async
       headers: { Cookie: `skill-scope-session=${sessionToken}` }
     })).json()
     assert.equal(skills.ok, true)
-    assert.equal(skills.stats.total, 2)
+    assert.equal(skills.stats.total, 4)
+    assert.equal(skills.stats.bySource.system, 1)
+    assert.equal(skills.stats.bySource.plugin, 1)
+    assert.equal(skills.stats.bySource.user, 1)
+    assert.equal(skills.stats.bySource.managed, 1)
     assert.ok(skills.skills.some((skill) => skill.name === 'user-skill'))
     assert.ok(skills.skills.some((skill) => skill.name === 'managed-a' && skill.canDelete === true))
+    assert.ok(skills.skills.some((skill) => skill.name === 'sys-skill' && skill.canDelete === false))
+    assert.ok(skills.skills.some((skill) => skill.name === 'plugin-skill' && skill.canDelete === false))
 
     const plan = await fetch(`${baseUrl}/api/policy/plan`, {
       method: 'POST',

@@ -1,6 +1,6 @@
 {
   "name": "skill-scope",
-  "version": "0.1.0+codex.20260807064704",
+  "version": "0.1.0+codex.20260807072817",
   "description": "Standalone Skill scope control for Codex: global/thread toggles, delete/restore, and SkillsMP installation.",
   "author": {
     "name": "Backtthefuture",

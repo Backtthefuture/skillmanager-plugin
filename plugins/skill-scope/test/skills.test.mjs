@@ -143,3 +143,77 @@ test('purgeTrash permanently removes a trash entry', async () => {
   await assert.rejects(() => skills.purgeTrash(ctx, trash[0].trashId), { code: 'NOT_IN_TRASH' })
   void base
 })
+
+test('scanAllSkills enumerates system/plugin/user/managed/skillsmp with canDelete rules', async () => {
+  const { ctx, base } = await makeContext()
+  await writeSkill(path.join(ctx.dataDir, 'skills', 'managed-a'), 'managed-a')
+  const smp = path.join(ctx.dataDir, 'skills', 'skillsmp-b')
+  await writeSkill(smp, 'skillsmp-b')
+  await fs.writeFile(path.join(smp, '.skill-scope-source.json'), JSON.stringify({ repo: 'https://github.com/x/y', installedAt: new Date().toISOString() }), 'utf8')
+  await writeSkill(path.join(ctx.globalRoot, 'user-skill'), 'user-skill')
+  await writeSkill(path.join(ctx.globalRoot, '.system', 'sys-skill'), 'sys-skill')
+  await fs.symlink(path.join(base, 'missing-target'), path.join(ctx.globalRoot, 'broken-link')).catch(() => {})
+
+  const fakePlugin = path.join(base, 'plugins', 'fake-plugin')
+  await fs.mkdir(path.join(fakePlugin, '.codex-plugin'), { recursive: true })
+  await fs.mkdir(path.join(fakePlugin, 'skills', 'plugin-skill'), { recursive: true })
+  await fs.writeFile(path.join(fakePlugin, '.codex-plugin', 'plugin.json'), JSON.stringify({ name: 'fake-plugin', version: '1.0.0', skills: './skills/' }), 'utf8')
+  await writeSkill(path.join(fakePlugin, 'skills', 'plugin-skill'), 'plugin-skill')
+
+  process.env.SKILL_SCOPE_PLUGIN_ROOTS = fakePlugin
+  try {
+    const scan = await skills.scanAllSkills(ctx, { threadId: null })
+    const byName = Object.fromEntries(scan.skills.map((skill) => [skill.name, skill]))
+    assert.equal(byName['managed-a'].source, 'managed')
+    assert.equal(byName['managed-a'].canDelete, true)
+    assert.equal(byName['skillsmp-b'].source, 'skillsmp')
+    assert.equal(byName['skillsmp-b'].canDelete, true)
+    assert.equal(byName['user-skill'].source, 'user')
+    assert.equal(byName['user-skill'].canDelete, false)
+    assert.equal(byName['sys-skill'].source, 'system')
+    assert.equal(byName['sys-skill'].canDelete, false)
+    assert.equal(byName['plugin-skill'].source, 'plugin')
+    assert.equal(byName['plugin-skill'].canDelete, false)
+    assert.equal(byName['broken-link'].broken, true)
+    assert.equal(byName['broken-link'].canDelete, false)
+    assert.equal(scan.stats.bySource.system, 1)
+    assert.equal(scan.stats.bySource.plugin, 1)
+    assert.equal(scan.stats.bySource.user, 1)
+    assert.equal(scan.stats.bySource.managed, 1)
+    assert.equal(scan.stats.bySource.skillsmp, 1)
+    assert.equal(scan.stats.broken, 1)
+  } finally {
+    delete process.env.SKILL_SCOPE_PLUGIN_ROOTS
+  }
+})
+
+test('scanAllSkills dedupes by normalized name with managed priority', async () => {
+  const { ctx, base } = await makeContext()
+  await writeSkill(path.join(ctx.dataDir, 'skills', 'dup-skill'), 'dup-skill')
+  const fakePlugin = path.join(base, 'plugins', 'dup-plugin')
+  await fs.mkdir(path.join(fakePlugin, '.codex-plugin'), { recursive: true })
+  await fs.mkdir(path.join(fakePlugin, 'skills', 'dup-skill'), { recursive: true })
+  await fs.writeFile(path.join(fakePlugin, '.codex-plugin', 'plugin.json'), JSON.stringify({ name: 'dup-plugin', version: '1.0.0', skills: './skills/' }), 'utf8')
+  await writeSkill(path.join(fakePlugin, 'skills', 'dup-skill'), 'dup-skill')
+  process.env.SKILL_SCOPE_PLUGIN_ROOTS = fakePlugin
+  try {
+    const scan = await skills.scanAllSkills(ctx, { threadId: null })
+    const entry = scan.skills.find((skill) => skill.name === 'dup-skill')
+    assert.equal(entry.source, 'managed')
+    assert.equal(entry.canDelete, true)
+    assert.equal(entry.conflict, true)
+  } finally {
+    delete process.env.SKILL_SCOPE_PLUGIN_ROOTS
+  }
+})
+
+test('scanAllSkills parses quoted frontmatter names (regression)', async () => {
+  const { ctx } = await makeContext()
+  const dir = path.join(ctx.globalRoot, 'quoted-skill')
+  await fs.mkdir(dir, { recursive: true })
+  await fs.writeFile(path.join(dir, 'SKILL.md'), '---\nname: "quoted-skill"\ndescription: "Quoted name."\n---\n# Quoted\n', 'utf8')
+  const scan = await skills.scanAllSkills(ctx, { threadId: null })
+  const entry = scan.skills.find((skill) => skill.name === 'quoted-skill')
+  assert.ok(entry, 'quoted frontmatter name should parse and be listed')
+  assert.equal(entry.description, 'Quoted name.')
+})

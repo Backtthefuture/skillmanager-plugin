@@ -289,28 +289,13 @@ async function handleApi(request, response, pathname, query, body, sessions, ctx
   if (pathname === '/api/skills' && request.method === 'GET') {
     const threadId = query.thread_id || process.env.CODEX_THREAD_ID || null
     const selectedScope = query.scope === 'thread' ? 'thread' : 'global'
-    const scan = await skills.scanSkills(ctx, { threadId })
+    const scan = await skills.scanAllSkills(ctx, { threadId })
     const policies = await policy.listScopes(ctx)
     const trash = await skills.listTrash(ctx)
-    const threadPolicy = threadId ? await policy.loadScopePolicy(ctx, 'thread', threadId) : null
-    const globalPolicy = await policy.loadScopePolicy(ctx, 'global', null)
-    const protectedSkills = []
-    for (const name of scan.skills.map((skill) => skill.name)) {
-      if (await skills.isProtectedSkill(ctx, name)) protectedSkills.push(name)
-    }
     const skillsWithScope = scan.skills.map((skill) => {
-      const globalState = globalPolicy?.enabled?.[skill.name] ? 'enabled'
-        : globalPolicy?.disabled?.[skill.name] ? 'disabled'
-          : 'inherit'
-      const threadState = threadPolicy?.enabled?.[skill.name] ? 'enabled'
-        : threadPolicy?.disabled?.[skill.name] ? 'disabled'
-          : 'inherit'
       return {
         ...skill,
-        globalState,
-        threadState,
-        scopeState: { state: selectedScope === 'thread' ? threadState : globalState },
-        canDelete: Boolean(skill.managed) && !protectedSkills.includes(skill.name)
+        scopeState: { state: selectedScope === 'thread' ? skill.threadState : skill.globalState }
       }
     })
     return sendJson(response, 200, {

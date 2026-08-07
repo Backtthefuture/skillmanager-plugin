@@ -72,6 +72,11 @@ skill-scope 自带一个本地 Web Dashboard（skill-scope 自己的实现，不
   链接 60 秒内有效且只能用一次。
 - 页面：Skills 总览（全量卡片、独立开关、搜索/筛选/批量）、作用域（global/thread）、
   回收站（恢复/永久清除）、事务/回滚、审计、Doctor。
+- Skills 总览枚举 Codex 可见的全部 Skill：系统（`~/.codex/skills/.system/*`）、
+  插件（`codex plugin list --json` 给出的已启用插件 `skills/` 目录）、用户
+  （`~/.codex/skills/*` 及一级子目录）、受管库（`$DATA_DIR/skills/*`，含 SkillsMP 标记）。
+  按规范化名称去重（managed/skillsmp > user > plugin > system），损坏的符号链接跳过
+  并在同名有效条目上标记冲突。
 - 顶部作用域切换只有 `global / thread`；thread 模式自动显示 `CODEX_THREAD_ID`，
   缺失时可手动输入并提示降级到 global。
 - 删除 Skill 先出计划，确认后移入回收站；回收站可恢复，永久清除需二次确认。
@@ -109,6 +114,30 @@ node --test test/
 
 覆盖策略解析/继承、符号链接与回滚、旧 project 数据归档、Skill 删除/恢复、
 本地目录安装（SkillsMP/GitHub 安装逻辑的同源实现）、MCP JSON-RPC 全工具调用、CLI 冒烟。
+
+### Dashboard 弹窗显隐回归（`[hidden]` 修复）
+
+`web/dashboard.css` 在基础重置后包含全局规则：
+
+```css
+[hidden] { display: none !important; }
+```
+
+它确保 `.modal`、`.toast`、`.field` 等 `display:flex/grid` 类不会覆盖 HTML `hidden`
+属性（计划弹窗“确认/取消/✕”卡住即由此引起）。回归测试：
+
+- `test/css.test.mjs`：断言 `[hidden]` 规则存在、`.hidden` 切换的元素在 HTML 中都存在、
+  覆盖检查所有设置 display 的隐藏类。
+- `test/server-smoke.test.mjs`：断言服务端实际返回的 `/dashboard.css` 包含该规则。
+
+持久化方案：
+
+1. 源码修复已落在本地 marketplace 源目录（插件更新的唯一来源），cachebuster 重装后
+   缓存副本同步包含修复；
+2. 上游 PR 分支 `fix/dashboard-hidden-css` 与补丁
+   `~/Codex-plugins/skill-scope/fix-dashboard-hidden-css.patch` 已备好（上游仓库当前
+   尚未包含 skill-scope 插件，PR 需整体新增该插件）；
+3. 兜底脚本 `fix-skill-scope-dashboard.sh` 可对任意安装缓存重复执行，幂等补齐规则。
 
 ## 文档
 

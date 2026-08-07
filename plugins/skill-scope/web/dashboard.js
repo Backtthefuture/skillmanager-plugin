@@ -66,7 +66,7 @@ function toast(message, kind = 'ok', actionLabel = null, actionFn = null) {
 }
 
 function sourceLabel(source) {
-  return { plugin: '插件', symlink: '软链', local: '本地', managed: '受管', skillsmp: 'SkillsMP', user: '用户' }[source] || source || '本地'
+  return { system: '系统', plugin: '插件', user: '用户', managed: '受管', skillsmp: 'SkillsMP', symlink: '软链', local: '本地' }[source] || source || '本地'
 }
 
 function effectiveSourceLabel(source) {
@@ -197,7 +197,9 @@ function skillCard(skill) {
     `<span class="mini-badge">${esc(sourceLabel(skill.source))}</span>`,
     skill.category ? `<span class="mini-badge indigo">${esc(skill.category)}</span>` : '',
     skill.managed ? `<span class="mini-badge green">受管</span>` : '',
-    skill.conflict ? `<span class="mini-badge red">⚠ 冲突</span>` : ''
+    skill.protected ? `<span class="mini-badge amber">受保护</span>` : '',
+    skill.broken ? `<span class="mini-badge red">⚠ 损坏链接</span>` : '',
+    skill.conflict ? `<span class="mini-badge red">⚠ 同名冲突</span>` : ''
   ].filter(Boolean).join('')
   const deleteButton = skill.canDelete
     ? `<button class="btn btn-danger" data-delete="${esc(skill.name)}">删除</button>`
