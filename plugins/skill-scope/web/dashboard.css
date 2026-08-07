@@ -150,6 +150,14 @@ a { color: inherit; text-decoration: none; }
 .scope-control button.active-off { background: #450a0a33; color: var(--red); border-color: #7f1d1d; }
 .scope-control button.active-inherit { background: #1e1b4b33; color: #a5b4fc; border-color: #4f46e5; }
 .scope-control button:disabled { opacity: .35; cursor: not-allowed; }
+.default-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.default-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.default-control { display: inline-flex; gap: 3px; background: #020617; border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
+.default-control button { border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 7px; }
+.default-control button:hover { color: var(--text-soft); background: #1e293b; }
+.default-control button.active { background: #1e1b4b33; color: #a5b4fc; border-color: #4f46e5; }
+.default-control button.default-off.active { background: #450a0a33; color: var(--red); border-color: #7f1d1d; }
+.default-control button.default-on.active { background: #052e1633; color: var(--green); border-color: #166534; }
 .card-actions { display: flex; gap: 6px; justify-content: flex-end; }
 
 .panel-head { margin-bottom: 12px; }
@@ -192,6 +200,7 @@ table.grid-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .plan-change .tag { font-weight: 700; }
 .plan-change .tag.policy { color: var(--cyan); }
 .plan-change .tag.link { color: var(--amber); }
+.plan-change .tag.default { color: #f472b6; }
 .plan-risk { color: #fcd34d; font-size: 12px; padding: 8px 10px; border-left: 3px solid #b45309; background: #451a0333; border-radius: 6px; margin-top: 8px; }
 .plan-hint { color: var(--muted); font-size: 11px; margin-top: 10px; }
 .badge { display: inline-flex; align-items: center; gap: 4px; width: fit-content; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--muted); background: #02061755; }

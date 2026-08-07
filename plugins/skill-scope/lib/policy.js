@@ -88,6 +88,12 @@ export function normalizeScope(scope) {
   throw new PolicyError('INVALID_SCOPE', 'Scope must be one of: global, thread (project scope was removed)')
 }
 
+export function normalizeThreadDefault(value) {
+  const state = String(value || 'disabled').trim().toLowerCase()
+  if (state === 'disabled' || state === 'enabled' || state === 'inherit') return state
+  throw new PolicyError('INVALID_DEFAULT_STATE', 'Thread default must be one of: disabled, enabled, inherit')
+}
+
 export function normalizeSkillName(skill) {
   const value = String(skill || '').trim()
   if (!SKILL_NAME_RE.test(value)) {
@@ -144,7 +150,8 @@ function emptyPolicy(scope, target) {
     scope: normalizeScope(scope),
     updatedAt: nowIso(),
     enabled: {},
-    disabled: {}
+    disabled: {},
+    defaults: {}
   }
   if (scope === 'thread' && target) policy.target = { threadId: sanitizeThreadId(target) }
   return policy
@@ -160,7 +167,8 @@ export async function loadScopePolicy(ctx, scope, target) {
     schemaVersion: POLICY_SCHEMA_VERSION,
     scope: normalized,
     enabled: parsed.enabled && typeof parsed.enabled === 'object' ? parsed.enabled : {},
-    disabled: parsed.disabled && typeof parsed.disabled === 'object' ? parsed.disabled : {}
+    disabled: parsed.disabled && typeof parsed.disabled === 'object' ? parsed.disabled : {},
+    defaults: parsed.defaults && typeof parsed.defaults === 'object' ? parsed.defaults : {}
   }
 }
 
@@ -173,6 +181,7 @@ export async function saveScopePolicy(ctx, policy) {
   policy.updatedAt = nowIso()
   policy.enabled = policy.enabled || {}
   policy.disabled = policy.disabled || {}
+  policy.defaults = policy.defaults || {}
   await writeJsonAtomic(scopePolicyPath(ctx, scope, target), policy)
   return policy
 }
@@ -182,6 +191,13 @@ function entryFromPolicy(policy, skill) {
   if (policy?.disabled?.[name]) return { state: 'disabled', meta: policy.disabled[name] }
   if (policy?.enabled?.[name]) return { state: 'enabled', meta: policy.enabled[name] }
   return null
+}
+
+function threadDefaultEntry(policy, skill) {
+  const name = normalizeSkillName(skill)
+  const entry = policy?.defaults?.[name]
+  if (!entry || typeof entry !== 'object' || !entry.thread) return null
+  return { thread: entry.thread, updatedAt: entry.updatedAt || null, reason: entry.reason || null, source: entry.source || null }
 }
 
 export async function setSkillPolicy(ctx, { scope, target, skill, state, reason, source = 'cli' }) {
@@ -200,6 +216,25 @@ export async function setSkillPolicy(ctx, { scope, target, skill, state, reason,
   }
   await saveScopePolicy(ctx, policy)
   return { policy, previous, changed: true, file: scopePolicyPath(ctx, normalizedScope, target) }
+}
+
+export async function setSkillDefault(ctx, { skill, threadDefault = 'disabled', reason = null, source = 'cli' }) {
+  const name = normalizeSkillName(skill)
+  const state = normalizeThreadDefault(threadDefault)
+  const policy = await loadScopePolicy(ctx, 'global', null)
+  const previous = threadDefaultEntry(policy, name)
+  if (state === 'inherit') {
+    delete policy.defaults[name]
+  } else {
+    policy.defaults[name] = {
+      thread: state,
+      updatedAt: nowIso(),
+      reason: typeof reason === 'string' && reason.trim() ? reason.trim().slice(0, 500) : null,
+      source: typeof source === 'string' && source.trim() ? source.trim().slice(0, 40) : 'cli'
+    }
+  }
+  await saveScopePolicy(ctx, policy)
+  return { policy, previous, changed: Boolean(previous) || state !== 'inherit', file: scopePolicyPath(ctx, 'global', null) }
 }
 
 export async function resetScopePolicy(ctx, { scope, target, skill, all = false, source = 'cli' }) {
@@ -243,6 +278,17 @@ export async function resolveEffective(ctx, { skill, threadId = null, policies =
         updatedAt: entry.meta?.updatedAt || null,
         policySource: entry.meta?.source || null
       }
+    }
+  }
+  const threadDefault = threadDefaultEntry(globalPolicy, name)
+  if (threadDefault?.thread === 'disabled' || threadDefault?.thread === 'enabled') {
+    const state = threadDefault.thread
+    return {
+      enabled: state === 'enabled',
+      source: 'thread-default',
+      reason: state === 'disabled' ? 'conversation-level default-off' : 'conversation-level default-on',
+      updatedAt: threadDefault.updatedAt || null,
+      policySource: threadDefault.source || null
     }
   }
   return { enabled: true, source: 'default', reason: 'no explicit policy', updatedAt: null, policySource: null }
@@ -310,7 +356,13 @@ export async function listScopes(ctx) {
     updatedAt: nowIso(),
     global: {
       enabled: Object.keys(global.enabled),
-      disabled: Object.keys(global.disabled)
+      disabled: Object.keys(global.disabled),
+      defaults: Object.entries(global.defaults || {}).map(([skill, entry]) => ({
+        skill,
+        thread: entry?.thread || null,
+        updatedAt: entry?.updatedAt || null,
+        source: entry?.source || null
+      }))
     },
     threads
   }
@@ -609,6 +661,21 @@ async function buildChanges(ctx, operations, skillSources, source) {
           changes.push({ kind: 'link', action: 'remove', scope, skill, linkPath, sourcePath: links.links[linkPath].sourcePath })
         }
       }
+    } else if (op.action === 'default') {
+      const threadDefault = normalizeThreadDefault(op.threadDefault || 'disabled')
+      const policy = await loadScopePolicy(ctx, 'global', null)
+      const before = policy.defaults?.[skill] ? { ...policy.defaults[skill] } : null
+      const after = threadDefault === 'inherit' ? null : { thread: threadDefault, updatedAt: nowIso(), reason: op.reason || null, source }
+      changes.push({
+        kind: 'default',
+        action: threadDefault === 'inherit' ? 'reset-default' : 'set-default',
+        scope: 'global',
+        skill,
+        threadDefault,
+        reason: op.reason || null,
+        before,
+        after
+      })
     }
   }
   return { changes, risks }
@@ -639,6 +706,21 @@ export async function createPlan(ctx, operations, skillSources = null, { source 
 }
 
 async function applyPolicyChange(ctx, change, source) {
+  if (change.kind === 'default') {
+    const policy = await loadScopePolicy(ctx, 'global', null)
+    if (change.action === 'set-default') {
+      policy.defaults[change.skill] = {
+        thread: change.threadDefault,
+        updatedAt: nowIso(),
+        reason: change.reason || null,
+        source
+      }
+    } else {
+      delete policy.defaults[change.skill]
+    }
+    await saveScopePolicy(ctx, policy)
+    return { ...change, status: 'applied' }
+  }
   if (change.kind !== 'policy') return null
   const target = change.target
   const policy = await loadScopePolicy(ctx, change.scope, target)
@@ -671,7 +753,7 @@ export async function applyPlan(ctx, planId, { source = 'cli' } = {}) {
   const txnId = `txn_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`
   const applied = []
   for (const change of plan.changes) {
-    if (change.kind === 'policy') {
+    if (change.kind === 'policy' || change.kind === 'default') {
       applied.push(await applyPolicyChange(ctx, change, source))
     } else if (change.kind === 'link') {
       if (change.action === 'create') applied.push(await createManagedLink(ctx, txnId, change, source))
@@ -708,6 +790,12 @@ export async function applyOperations(ctx, operations, skillSources = null, { so
 async function restorePolicySnapshot(ctx, change) {
   const target = change.target
   const policy = await loadScopePolicy(ctx, change.scope, target)
+  if (change.kind === 'default') {
+    delete policy.defaults[change.skill]
+    if (change.before) policy.defaults[change.skill] = { ...change.before }
+    await saveScopePolicy(ctx, policy)
+    return
+  }
   if (change.action === 'set') {
     delete policy.enabled[change.skill]
     delete policy.disabled[change.skill]
@@ -756,7 +844,7 @@ export async function rollbackTransaction(ctx, txnId, { source = 'cli' } = {}) {
         await saveLinks(ctx, links)
       }
       restored.push({ ...change, status: 'restored' })
-    } else if (change.kind === 'policy' && change.status === 'applied') {
+    } else if ((change.kind === 'policy' || change.kind === 'default') && change.status === 'applied') {
       await restorePolicySnapshot(ctx, change)
       restored.push({ ...change, status: 'restored' })
     }
@@ -806,11 +894,13 @@ export const engine = {
   PolicyError,
   resolveContext,
   normalizeScope,
+  normalizeThreadDefault,
   normalizeSkillName,
   sanitizeThreadId,
   loadScopePolicy,
   saveScopePolicy,
   setSkillPolicy,
+  setSkillDefault,
   resetScopePolicy,
   resolveEffective,
   resolveAllEffective,

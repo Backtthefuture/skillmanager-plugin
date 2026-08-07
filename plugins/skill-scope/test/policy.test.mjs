@@ -48,6 +48,51 @@ test('two layers: thread > global, inherit, default enabled, explicit disabled w
   assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).enabled, false)
 })
 
+test('thread default-off classification disables unconfigured skills in threads until explicitly enabled', async () => {
+  const { ctx } = await makeContext()
+  await policy.setSkillDefault(ctx, { skill: 'alpha', threadDefault: 'disabled', reason: 'conversation-only', source: 'cli' })
+
+  const inThread = await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })
+  assert.equal(inThread.enabled, false)
+  assert.equal(inThread.source, 'thread-default')
+  assert.equal(inThread.reason, 'conversation-level default-off')
+
+  // Without a thread id the classification still applies (global fallback is also a conversation).
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha' })).enabled, false)
+
+  // Explicit thread enable wins over the default-off classification.
+  await policy.setSkillPolicy(ctx, { scope: 'thread', target: 'thread-1', skill: 'alpha', state: true })
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).enabled, true)
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).source, 'thread')
+
+  // Explicit global enable also wins.
+  await policy.setSkillPolicy(ctx, { scope: 'global', skill: 'alpha', state: true })
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })).enabled, true)
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })).source, 'global')
+
+  // Removing the classification restores default-on for unconfigured threads.
+  await policy.setSkillDefault(ctx, { skill: 'alpha', threadDefault: 'inherit' })
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })).enabled, true)
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })).source, 'global')
+})
+
+test('thread default plan applies and rolls back', async () => {
+  const { ctx } = await makeContext()
+  const transaction = await policy.applyOperations(ctx, [{ action: 'default', scope: 'global', skill: 'alpha', threadDefault: 'disabled' }], null, { source: 'cli' })
+  assert.equal(transaction.changes[0].kind, 'default')
+  assert.equal(transaction.changes[0].action, 'set-default')
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).enabled, false)
+
+  const resetTxn = await policy.applyOperations(ctx, [{ action: 'default', scope: 'global', skill: 'alpha', threadDefault: 'inherit' }], null, { source: 'cli' })
+  assert.equal(resetTxn.changes[0].action, 'reset-default')
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).enabled, true)
+
+  await policy.rollbackTransaction(ctx, resetTxn.id, { source: 'cli' })
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).enabled, false)
+  await policy.rollbackTransaction(ctx, transaction.id, { source: 'cli' })
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).enabled, true)
+})
+
 test('project scope is rejected and listScopes only returns global/thread', async () => {
   const { ctx } = await makeContext()
   assert.throws(() => policy.normalizeScope('project'), { code: 'INVALID_SCOPE' })

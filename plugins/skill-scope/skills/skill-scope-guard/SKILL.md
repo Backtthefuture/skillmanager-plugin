@@ -28,11 +28,14 @@ description: 由 skill-scope 插件提供的对话级守护 Skill。当对话涉
 3. 两者都缺失时，工具返回 `THREAD_ID_MISSING` 警告并降级到 global 策略；
    你要在回复中说明：对话级开关无法生效，当前只按全局策略执行。
 
-## 生效规则（两层）
+## 生效规则（两层 + 对话级默认）
 
-- 优先级：`thread > global`。
-- thread 未配置时继承 global；global 未配置时默认启用。
+- 优先级：`thread > global > 对话级默认分类`。
+- thread 未配置时继承 global；global 未配置时，若该 Skill 被标记为
+  “对话级默认关闭”则默认禁用，否则默认启用。
 - 显式关闭优先于显式启用。
+- 标记为对话级默认关闭的 Skill 不会出现在 `enabled` 数组，只有显式开启
+  （thread/global）后才会加入。
 - 只使用返回结果 `enabled` 数组中的 Skill；`disabled` 中的 Skill 不得调用，
   不得以其流程作答，也不得绕道读取其 `SKILL.md`。
 - `get_active_skills` 调用失败时，对受限 Skill 采取 **fail-closed**：不假定可用，

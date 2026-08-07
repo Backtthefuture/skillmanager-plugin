@@ -48,6 +48,7 @@ async function listSkillsResult(threadId) {
       repo: skill.repo,
       managed: skill.managed,
       conflict: Boolean(skill.conflict),
+      threadDefault: skill.threadDefault || null,
       effective: skill.effective,
       scopeState: skill.scopeState
     }))
@@ -133,6 +134,23 @@ const TOOLS = [
         preview: { type: 'boolean', default: true },
         response_format: { type: 'string', enum: ['markdown', 'json'], default: 'markdown' }
       },
+      additionalProperties: false
+    }
+  },
+  {
+    name: 'set_skill_default',
+    title: 'Set Skill Thread Default',
+    description: 'Classify a Skill as conversation-level default-off (or default-on). A default-off Skill stays disabled in every thread until an explicit thread or global switch enables it. Use thread_default=inherit to remove the classification.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        skill: { type: 'string' },
+        thread_default: { type: 'string', enum: ['disabled', 'enabled', 'inherit'], default: 'disabled' },
+        reason: { type: 'string' },
+        preview: { type: 'boolean', default: true },
+        response_format: { type: 'string', enum: ['markdown', 'json'], default: 'markdown' }
+      },
+      required: ['skill'],
       additionalProperties: false
     }
   },
@@ -232,11 +250,12 @@ async function callTool(name, args) {
     }
     case 'list_skill_scopes': {
       const output = await policy.listScopes(context())
-      return toolResult(output, `# Skill scopes\n\nGlobal enabled: ${output.global.enabled.length}, disabled: ${output.global.disabled.length}\nThreads: ${output.threads.length}`)
+      return toolResult(output, `# Skill scopes\n\nGlobal enabled: ${output.global.enabled.length}, disabled: ${output.global.disabled.length}, thread defaults: ${output.global.defaults.length}\nThreads: ${output.threads.length}`)
     }
     case 'get_skill_policy': {
       const ctx = context()
       const threadId = threadIdFromArgs(args)
+      const globalPolicy = await policy.loadScopePolicy(ctx, 'global', null)
       const layer = args.scope
         ? await policy.loadScopePolicy(ctx, args.scope, args.scope === 'thread' ? threadId : null)
         : null
@@ -251,6 +270,7 @@ async function callTool(name, args) {
           disabled: Object.keys(layer.disabled || {}).includes(args.skill),
           entry: layer.enabled?.[args.skill] || layer.disabled?.[args.skill] || null
         } : null,
+        defaults: globalPolicy.defaults?.[args.skill] || null,
         effective,
         threadId
       }
@@ -300,6 +320,17 @@ async function callTool(name, args) {
       }
       const transaction = await policy.applyOperations(ctx, operations, null, { source: 'mcp' })
       return toolResult({ schemaVersion: 1, applied: true, warnings, transactionId: transaction.id, changes: transaction.changes }, `# Applied: reset ${args.all ? 'all' : args.skill} (${scope})\n\nTransaction ${transaction.id}`)
+    }
+    case 'set_skill_default': {
+      const ctx = context()
+      const state = policy.normalizeThreadDefault(args.thread_default || 'disabled')
+      const operations = [{ action: 'default', scope: 'global', skill: args.skill, threadDefault: state, reason: args.reason || null }]
+      if (args.preview !== false) {
+        const plan = await policy.createPlan(ctx, operations, null, { source: 'mcp' })
+        return toolResult({ schemaVersion: 1, applied: false, plan, rollback_hint: 'Review the plan, then call set_skill_default again with preview:false' }, `# Preview: ${args.skill} thread default → ${state}\n\n${plan.changes.length} change(s), ${plan.risks.length} risk(s). Plan: ${plan.id}`)
+      }
+      const transaction = await policy.applyOperations(ctx, operations, null, { source: 'mcp' })
+      return toolResult({ schemaVersion: 1, applied: true, transactionId: transaction.id, changes: transaction.changes, rollback_hint: `skill-scope policy default --skill ${args.skill} --state inherit --apply` }, `# Applied: ${args.skill} thread default → ${state}\n\nTransaction ${transaction.id}`)
     }
     case 'get_active_skills': {
       const ctx = context()

@@ -64,6 +64,27 @@ test('CLI status, policy, skill delete/restore, and market install work', async 
   assert.equal(restored.status, 0, restored.stderr)
   assert.equal(JSON.parse(restored.stdout).applied, true)
 
+  const resetGlobal = run(['policy', 'reset', '--scope', 'global', '--skill', 'cli-skill', '--apply', '--json'], env)
+  assert.equal(resetGlobal.status, 0, resetGlobal.stderr)
+
+  const defaultOff = run(['policy', 'default', '--skill', 'cli-skill', '--state', 'disabled', '--apply', '--json'], env)
+  assert.equal(defaultOff.status, 0, defaultOff.stderr)
+  assert.equal(JSON.parse(defaultOff.stdout).applied, true)
+
+  const defaultStatus = run(['policy', 'status', '--skill', 'cli-skill', '--scope', 'thread', '--json'], env)
+  assert.equal(defaultStatus.status, 0, defaultStatus.stderr)
+  assert.equal(JSON.parse(defaultStatus.stdout).effective.enabled, false)
+  assert.equal(JSON.parse(defaultStatus.stdout).effective.source, 'thread-default')
+  assert.equal(JSON.parse(defaultStatus.stdout).defaults.thread, 'disabled')
+
+  const listWithDefaults = run(['policy', 'list', '--json'], env)
+  assert.equal(listWithDefaults.status, 0)
+  assert.ok(JSON.parse(listWithDefaults.stdout).global.defaults.some((entry) => entry.skill === 'cli-skill' && entry.thread === 'disabled'))
+
+  const defaultInherit = run(['policy', 'default', '--skill', 'cli-skill', '--state', 'inherit', '--apply', '--json'], env)
+  assert.equal(defaultInherit.status, 0, defaultInherit.stderr)
+  assert.equal(JSON.parse(defaultInherit.stdout).applied, true)
+
   const enable = run(['policy', 'enable', '--scope', 'global', '--skill', 'cli-skill', '--apply', '--json'], env)
   assert.equal(enable.status, 0, enable.stderr)
   assert.equal(JSON.parse(enable.stdout).applied, true)

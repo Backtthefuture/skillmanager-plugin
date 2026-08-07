@@ -90,7 +90,7 @@ test('MCP exposes and runs all standalone skill-scope tools', async () => {
 
     const tools = await client.send('tools/list', {})
     const names = tools.result.tools.map((tool) => tool.name)
-    const expected = ['get_status', 'list_skills', 'list_skill_scopes', 'get_skill_policy', 'set_skill_enabled', 'reset_skill_scope', 'get_active_skills', 'delete_skill', 'restore_skill', 'open_skillsmp', 'install_from_skillsmp']
+    const expected = ['get_status', 'list_skills', 'list_skill_scopes', 'get_skill_policy', 'set_skill_enabled', 'set_skill_default', 'reset_skill_scope', 'get_active_skills', 'delete_skill', 'restore_skill', 'open_skillsmp', 'install_from_skillsmp']
     for (const name of expected) assert.ok(names.includes(name), `missing ${name}`)
     assert.ok(!names.includes('get_skill_summary'), 'SkillManager-only tool should be gone')
 
@@ -164,6 +164,33 @@ test('MCP exposes and runs all standalone skill-scope tools', async () => {
       arguments: { scope: 'thread', skill: 'user-skill', preview: false, response_format: 'json' }
     })
     assert.equal(reset.result?.structuredContent?.applied, true)
+
+    const defaultPreview = await client.send('tools/call', {
+      name: 'set_skill_default',
+      arguments: { skill: 'user-skill', thread_default: 'disabled', preview: true, response_format: 'json' }
+    })
+    assert.equal(defaultPreview.result?.structuredContent?.applied, false)
+    assert.equal(defaultPreview.result?.structuredContent?.plan?.operations?.[0]?.action, 'default')
+
+    const defaultApplied = await client.send('tools/call', {
+      name: 'set_skill_default',
+      arguments: { skill: 'user-skill', thread_default: 'disabled', preview: false, response_format: 'json' }
+    })
+    assert.equal(defaultApplied.result?.structuredContent?.applied, true)
+
+    const policyWithDefault = await client.send('tools/call', {
+      name: 'get_skill_policy',
+      arguments: { skill: 'user-skill', response_format: 'json' }
+    })
+    assert.equal(policyWithDefault.result?.structuredContent?.defaults?.thread, 'disabled')
+    assert.equal(policyWithDefault.result?.structuredContent?.effective?.enabled, false)
+    assert.equal(policyWithDefault.result?.structuredContent?.effective?.source, 'thread-default')
+
+    const activeAfterDefault = await client.send('tools/call', {
+      name: 'get_active_skills',
+      arguments: { response_format: 'json' }
+    })
+    assert.ok(activeAfterDefault.result?.structuredContent?.disabled.includes('user-skill'))
   } finally {
     client.child.kill('SIGTERM')
   }

@@ -41,14 +41,19 @@
   "scope": "global",
   "updatedAt": "…",
   "enabled": { "my-skill": { "updatedAt": "…", "reason": null, "source": "cli" } },
-  "disabled": { "noisy-skill": { "updatedAt": "…", "reason": "…", "source": "mcp" } }
+  "disabled": { "noisy-skill": { "updatedAt": "…", "reason": "…", "source": "mcp" } },
+  "defaults": { "conversation-skill": { "thread": "disabled", "updatedAt": "…", "source": "mcp" } }
 }
 ```
 
 ## 3. 生效规则
 
-`thread > global`；thread 未配置继承 global；global 未配置默认启用；
-同一层显式关闭优先于显式启用。
+`thread > global > 对话级默认分类`；thread 未配置继承 global；global 未配置时，
+被标记为“对话级默认关闭”（`defaults.<skill>.thread = "disabled"`）的 Skill 默认禁用，
+其余默认启用；同一层显式关闭优先于显式启用。
+
+`defaults` 只存在全局策略中，表达“所有对话的默认状态”；显式 thread/global 配置永远优先。
+`get_active_skills` 返回的 `disabled` 因此会包含默认关闭且未显式开启的 Skill。
 
 `get_active_skills` 返回每个 Skill 的 `enabled` 与 `source`（thread/global/default），
 供对话直接展示。线程 id 自动读取 `CODEX_THREAD_ID`；缺失时返回
@@ -108,7 +113,7 @@
 - 侧边导航：Skills、作用域、回收站、事务、审计、Doctor。
 - 统计条：Skill 总数、全局启用、对话级覆盖、回收站、受限（禁用）。
 - 卡片：名称/描述/来源/分类/受管徽标、最终生效状态（启用/禁用 + thread/global）、
-  当前作用域「开/关/继承」开关、删除入口（仅受管 Skill）。
+  当前作用域「开/关/继承」开关、「对话级默认关/开/继承」分类开关、删除入口（仅受管 Skill）。
 - 作用域切换只有 global/thread；thread 自动读取 `CODEX_THREAD_ID`。
 - 所有写操作先弹计划面板，确认后执行；删除/恢复/永久清除均有明确确认与回滚路径。
 

@@ -52,6 +52,7 @@ function parseArguments(argv) {
     name: null,
     reason: null,
     source: null,
+    state: null,
     apply: false,
     all: false,
     port: null
@@ -66,6 +67,7 @@ function parseArguments(argv) {
     else if (arg === '--name') options.name = argv[++index]
     else if (arg === '--reason') options.reason = argv[++index]
     else if (arg === '--source') options.source = argv[++index]
+    else if (arg === '--state') options.state = argv[++index]
     else if (arg === '--apply' || arg === '--yes') options.apply = true
     else if (arg === '--all') options.all = true
     else if (arg === '--port') options.port = Number(argv[++index])
@@ -86,6 +88,7 @@ Usage:
   skill-scope policy list [--json]
   skill-scope policy status --skill <skill> [--scope global|thread] [--thread <id>] [--json]
   skill-scope policy enable|disable --scope global|thread --skill <skill> [--thread <id>] [--reason <text>] [--apply|--yes]
+  skill-scope policy default --skill <skill> --state disabled|enabled|inherit [--reason <text>] [--apply|--yes]
   skill-scope policy reset --scope <scope> [--skill <skill>|--all] [--thread <id>] [--apply|--yes]
   skill-scope skill list [--json]
   skill-scope skill delete <name> [--apply|--yes]
@@ -192,6 +195,10 @@ async function runPolicy(ctx, action, positional, options) {
     else {
       process.stdout.write(`global enabled: ${result.global.enabled.join(', ') || '(none)'}\n`)
       process.stdout.write(`global disabled: ${result.global.disabled.join(', ') || '(none)'}\n`)
+      const defaultOff = result.global.defaults.filter((entry) => entry.thread === 'disabled').map((entry) => entry.skill)
+      const defaultOn = result.global.defaults.filter((entry) => entry.thread === 'enabled').map((entry) => entry.skill)
+      process.stdout.write(`global thread-default off: ${defaultOff.join(', ') || '(none)'}\n`)
+      process.stdout.write(`global thread-default on: ${defaultOn.join(', ') || '(none)'}\n`)
       for (const thread of result.threads) {
         process.stdout.write(`thread ${thread.id} enabled: ${thread.enabled.join(', ') || '(none)'}, disabled: ${thread.disabled.join(', ') || '(none)'}\n`)
       }
@@ -200,11 +207,34 @@ async function runPolicy(ctx, action, positional, options) {
   }
   if (action === 'status') {
     const skill = policy.normalizeSkillName(options.skill)
+    const globalPolicy = await policy.loadScopePolicy(ctx, 'global', null)
     const layer = await policy.loadScopePolicy(ctx, scope, target)
     const effective = await policy.resolveEffective(ctx, { skill, threadId })
-    const output = { schemaVersion: 1, skill, scope, threadId, layer: { enabled: Object.keys(layer.enabled).includes(skill), disabled: Object.keys(layer.disabled).includes(skill) }, effective }
+    const output = { schemaVersion: 1, skill, scope, threadId, defaults: globalPolicy.defaults?.[skill] || null, layer: { enabled: Object.keys(layer.enabled).includes(skill), disabled: Object.keys(layer.disabled).includes(skill) }, effective }
     if (options.json) outputJson(output)
     else process.stdout.write(`"${skill}" final state: ${effective.enabled ? 'enabled' : 'disabled'} (source: ${effective.source})\n`)
+    return
+  }
+  if (action === 'default') {
+    if (!options.skill) throw new CliError('MISSING_SKILL', 'policy default requires --skill')
+    const state = policy.normalizeThreadDefault(options.state || 'disabled')
+    const skill = policy.normalizeSkillName(options.skill)
+    const operations = [{ action: 'default', scope: 'global', skill, threadDefault: state, reason: options.reason || null }]
+    if (!options.apply) {
+      const plan = await policy.createPlan(ctx, operations, null, { source: options.source || 'cli' })
+      const output = { schemaVersion: 1, applied: false, planId: plan.id, changes: plan.changes, risks: plan.risks, next: `Re-run with --apply to execute ${plan.id}` }
+      if (options.json) outputJson(output)
+      else {
+        process.stdout.write(`Preview ${plan.id} (${plan.changes.length} change(s), ${plan.risks.length} risk(s)):\n`)
+        process.stdout.write(JSON.stringify({ changes: plan.changes, risks: plan.risks }, null, 2) + '\n')
+        process.stdout.write(`Next: re-run with --apply.\n`)
+      }
+      return
+    }
+    const transaction = await policy.applyOperations(ctx, operations, null, { source: options.source || 'cli' })
+    const output = { schemaVersion: 1, applied: true, transactionId: transaction.id, changes: transaction.changes }
+    if (options.json) outputJson(output)
+    else process.stdout.write(`Applied: ${skill} thread default → ${state} (txn ${transaction.id})\n`)
     return
   }
   if (action === 'enable' || action === 'disable') {

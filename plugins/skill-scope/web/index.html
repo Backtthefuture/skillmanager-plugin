@@ -27,6 +27,7 @@
         <div class="sidebar-foot">
           <div class="foot-badge">thread &gt; global</div>
           <div class="foot-badge">显式关闭优先</div>
+          <div class="foot-badge">对话级默认关闭可选</div>
         </div>
       </aside>
 
@@ -89,7 +90,7 @@
             </div>
             <div class="grid-head">
               <span>全部 Skill（<span id="visible-count">0</span>）</span>
-              <span class="hint">最终状态按 thread &gt; global 计算；未配置时继承上层，默认启用</span>
+              <span class="hint">最终状态按 thread &gt; global &gt; 对话级默认 计算；未配置时默认启用，标记为“默认关”的 Skill 需显式开启才启动</span>
             </div>
             <div id="skill-grid" class="skill-grid" aria-live="polite"></div>
           </div>

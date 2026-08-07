@@ -12,6 +12,10 @@ codex plugin add skillmanager@backtthefuture
 
 安装后新建 Codex 任务，输入 **“打开 SkillManager”**。插件会启动或复用只监听 `127.0.0.1` 的本地服务，并返回 60 秒内有效、仅可使用一次的安全链接。不要打开源码中的 `file://web/index.html`。
 
+## 更新日志
+
+见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 能做什么
 
 - 区分“Agent 已安装”和“某个 Skill 支持该 Agent”，避免虚假的安装数量。

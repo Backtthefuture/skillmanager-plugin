@@ -160,6 +160,7 @@ export async function scanSkills(ctx, { threadId = null } = {}) {
     const effective = await resolveEffective(ctx, { skill: skill.name, threadId })
     skill.effective = { enabled: effective.enabled, source: effective.source, reason: effective.reason || null }
     const globalPolicy = await loadScopePolicy(ctx, 'global', null)
+    skill.threadDefault = globalPolicy.defaults?.[skill.name]?.thread || null
     if (globalPolicy.disabled?.[skill.name]) skill.scopeState = { state: 'disabled' }
     else if (globalPolicy.enabled?.[skill.name]) skill.scopeState = { state: 'enabled' }
     else skill.scopeState = { state: 'inherit' }
@@ -409,6 +410,7 @@ export async function scanAllSkills(ctx, { threadId = null } = {}) {
     const effective = await resolveEffective(ctx, { skill: name, threadId })
     const globalPolicy = await loadScopePolicy(ctx, 'global', null)
     const threadPolicy = threadId ? await loadScopePolicy(ctx, 'thread', threadId) : null
+    const threadDefault = globalPolicy.defaults?.[name]?.thread || null
     const globalState = globalPolicy?.enabled?.[name] ? 'enabled'
       : globalPolicy?.disabled?.[name] ? 'disabled'
         : 'inherit'
@@ -428,6 +430,7 @@ export async function scanAllSkills(ctx, { threadId = null } = {}) {
       conflict: Boolean(record.conflict),
       repo: record.repo || null,
       installedAt: record.installedAt || null,
+      threadDefault,
       globalState,
       threadState,
       effective: { enabled: effective.enabled, source: effective.source, reason: effective.reason || null }
