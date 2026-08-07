@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "skill-scope": {
+      "command": "./bin/skill-scope-mcp.js",
+      "cwd": "."
+    }
+  }
+}

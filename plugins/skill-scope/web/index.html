@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skill Scope Dashboard</title>
+    <link rel="stylesheet" href="/dashboard.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">🎯</div>
+          <div>
+            <div class="brand-name">Skill Scope</div>
+            <div class="brand-sub">本地 Dashboard</div>
+          </div>
+        </div>
+        <nav class="side-nav" aria-label="主导航">
+          <button class="side-link active" data-view="skills">Skills · 总览</button>
+          <button class="side-link" data-view="scope">作用域 · Scope</button>
+          <button class="side-link" data-view="trash">回收站 · Trash</button>
+          <button class="side-link" data-view="transactions">事务 · 回滚</button>
+          <button class="side-link" data-view="audit">审计 · Audit</button>
+          <button class="side-link" data-view="doctor">Doctor</button>
+        </nav>
+        <div class="sidebar-foot">
+          <div class="foot-badge">thread &gt; global</div>
+          <div class="foot-badge">显式关闭优先</div>
+        </div>
+      </aside>
+
+      <div class="main-wrap">
+        <nav class="mobile-nav" aria-label="移动端导航">
+          <button class="mobile-link active" data-view="skills">Skills</button>
+          <button class="mobile-link" data-view="scope">Scope</button>
+          <button class="mobile-link" data-view="trash">Trash</button>
+          <button class="mobile-link" data-view="transactions">事务</button>
+          <button class="mobile-link" data-view="audit">审计</button>
+          <button class="mobile-link" data-view="doctor">Doctor</button>
+        </nav>
+
+        <main class="content">
+          <header class="page-head">
+            <div>
+              <div class="kicker">Skill Scope</div>
+              <h1>Skill 管理 Dashboard</h1>
+              <p class="sub">global / thread 两层作用域 · 计划确认后生效 · 删除可恢复 · SkillsMP 下载</p>
+            </div>
+            <div class="head-actions">
+              <a class="btn btn-ghost" id="open-skillsmp" href="https://skillsmp.com" target="_blank" rel="noreferrer">打开 SkillsMP ↗</a>
+              <button class="btn btn-ghost" id="reload">⟳ 刷新</button>
+            </div>
+          </header>
+
+          <div id="error" class="error-banner" hidden></div>
+
+          <section class="context-bar">
+            <div class="scope-tabs" role="tablist" aria-label="作用域层">
+              <button class="scope-tab active" data-scope="global">global · 全局常开</button>
+              <button class="scope-tab" data-scope="thread">thread · 对话级</button>
+            </div>
+            <div class="field" id="field-thread" hidden>
+              <label for="thread-input">线程 id（自动读取 CODEX_THREAD_ID）</label>
+              <input id="thread-input" class="input mono" type="text" placeholder="019fda1a-…" spellcheck="false" />
+            </div>
+            <div class="install-box">
+              <input id="install-source" class="input" type="text" placeholder="SkillsMP 页面 / GitHub 地址 / owner/repo" />
+              <button class="btn btn-primary" id="install-btn">安装 Skill</button>
+            </div>
+            <div id="context-warning" class="context-warning" hidden></div>
+          </section>
+
+          <section id="stats" class="stats-bar" aria-label="统计"></section>
+
+          <div class="view" id="view-skills">
+            <div class="toolbar">
+              <input id="search" class="input search-input" type="search" placeholder="搜索 Skill 名称或描述…" />
+              <select id="filter-source" class="input select" aria-label="来源筛选"></select>
+              <select id="filter-category" class="input select" aria-label="分类筛选"></select>
+              <select id="filter-status" class="input select" aria-label="状态筛选">
+                <option value="all">全部状态</option>
+                <option value="enabled">生效启用</option>
+                <option value="disabled">生效禁用</option>
+              </select>
+              <span id="selected-count" class="selected-count" hidden></span>
+              <button class="btn btn-batch" id="batch-enable" disabled>批量启用</button>
+              <button class="btn btn-batch" id="batch-disable" disabled>批量禁用</button>
+            </div>
+            <div class="grid-head">
+              <span>全部 Skill（<span id="visible-count">0</span>）</span>
+              <span class="hint">最终状态按 thread &gt; global 计算；未配置时继承上层，默认启用</span>
+            </div>
+            <div id="skill-grid" class="skill-grid" aria-live="polite"></div>
+          </div>
+
+          <div class="view" id="view-scope" hidden>
+            <div class="panel-head"><h2>作用域策略</h2></div>
+            <div id="scope-panel" class="panel-body"></div>
+          </div>
+
+          <div class="view" id="view-trash" hidden>
+            <div class="panel-head"><h2>回收站</h2></div>
+            <div id="trash-panel" class="panel-body"></div>
+          </div>
+
+          <div class="view" id="view-transactions" hidden>
+            <div class="panel-head"><h2>事务 / 回滚</h2></div>
+            <div id="transactions" class="panel-body"></div>
+          </div>
+
+          <div class="view" id="view-audit" hidden>
+            <div class="panel-head"><h2>审计日志</h2></div>
+            <div id="audit" class="panel-body"></div>
+          </div>
+
+          <div class="view" id="view-doctor" hidden>
+            <div class="panel-head"><h2>Doctor · 一致性</h2></div>
+            <div id="doctor" class="panel-body"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div id="plan-modal" class="modal" hidden>
+      <div class="modal-card">
+        <div class="modal-head">
+          <div>
+            <div class="kicker">计划预览</div>
+            <h2 id="plan-title">确认变更</h2>
+          </div>
+          <button class="icon-btn" id="plan-cancel" aria-label="关闭">✕</button>
+        </div>
+        <div id="plan-body" class="modal-body"></div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" id="plan-cancel-foot">取消</button>
+          <button class="btn btn-primary" id="plan-apply">确认执行</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirm-modal" class="modal" hidden>
+      <div class="modal-card modal-small">
+        <div class="modal-head">
+          <h2 id="confirm-title">二次确认</h2>
+          <button class="icon-btn" id="confirm-cancel" aria-label="关闭">✕</button>
+        </div>
+        <div id="confirm-body" class="modal-body"></div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" id="confirm-cancel-foot">取消</button>
+          <button class="btn btn-primary" id="confirm-ok">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+    <script type="module" src="/dashboard.js"></script>
+  </body>
+</html>
