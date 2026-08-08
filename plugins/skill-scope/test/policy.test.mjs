@@ -65,8 +65,15 @@ test('thread default-off classification disables unconfigured skills in threads 
   assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).enabled, true)
   assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-1' })).source, 'thread')
 
-  // Explicit global enable also wins.
+  // Once enabled in a thread, the skill is conversation-scoped:
+  // other threads default off even when global is enabled.
   await policy.setSkillPolicy(ctx, { scope: 'global', skill: 'alpha', state: true })
+  const other = await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })
+  assert.equal(other.enabled, false)
+  assert.equal(other.source, 'thread-scope')
+
+  // Removing the thread enable unscopes the skill: global enable applies again.
+  await policy.resetScopePolicy(ctx, { scope: 'thread', target: 'thread-1', skill: 'alpha' })
   assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })).enabled, true)
   assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })).source, 'global')
 
@@ -74,6 +81,30 @@ test('thread default-off classification disables unconfigured skills in threads 
   await policy.setSkillDefault(ctx, { skill: 'alpha', threadDefault: 'inherit' })
   assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })).enabled, true)
   assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-2' })).source, 'global')
+})
+
+test('enabling a skill in one thread automatically scopes it to conversations (off elsewhere, no inherit)', async () => {
+  const { ctx } = await makeContext()
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-a' })).enabled, true)
+
+  await policy.setSkillPolicy(ctx, { scope: 'thread', target: 'thread-a', skill: 'alpha', state: true })
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-a' })).enabled, true)
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-a' })).source, 'thread')
+
+  const other = await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-b' })
+  assert.equal(other.enabled, false)
+  assert.equal(other.source, 'thread-scope')
+
+  // Explicit disable in another thread still wins at thread level.
+  await policy.setSkillPolicy(ctx, { scope: 'thread', target: 'thread-b', skill: 'alpha', state: false })
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-b' })).enabled, false)
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-b' })).source, 'thread')
+
+  // Removing all thread enables unscopes back to default-enabled.
+  await policy.resetScopePolicy(ctx, { scope: 'thread', target: 'thread-a', skill: 'alpha' })
+  await policy.resetScopePolicy(ctx, { scope: 'thread', target: 'thread-b', skill: 'alpha' })
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-b' })).enabled, true)
+  assert.equal((await policy.resolveEffective(ctx, { skill: 'alpha', threadId: 'thread-b' })).source, 'default')
 })
 
 test('thread default plan applies and rolls back', async () => {

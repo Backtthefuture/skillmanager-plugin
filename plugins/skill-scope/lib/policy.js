@@ -260,26 +260,72 @@ export async function resetScopePolicy(ctx, { scope, target, skill, all = false,
   return { policy, removed, file: scopePolicyPath(ctx, normalizedScope, target) }
 }
 
-export async function resolveEffective(ctx, { skill, threadId = null, policies = null }) {
+async function collectThreadScopedSkills(ctx) {
+  // 自动对话作用域：只要某个 Skill 在任一 thread 层被显式启用过，
+  // 它在其他未显式配置的对话里就默认关闭（thread-enable 即“只在这个对话运行”）。
+  const scoped = new Set()
+  const threadsDir = path.join(policyRoot(ctx), 'threads')
+  try {
+    const entries = await fs.readdir(threadsDir, { withFileTypes: true })
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.json')) continue
+      const threadId = entry.name.replace(/\.json$/, '')
+      if (!THREAD_ID_RE.test(threadId)) continue
+      const thread = await loadScopePolicy(ctx, 'thread', threadId)
+      for (const name of Object.keys(thread.enabled || {})) {
+        scoped.add(normalizeSkillName(name))
+      }
+    }
+  } catch {
+  }
+  return scoped
+}
+
+export async function resolveEffective(ctx, { skill, threadId = null, policies = null, threadScopedSkills = null }) {
   const name = normalizeSkillName(skill)
   const threadPolicy = policies?.thread ?? (threadId ? await loadScopePolicy(ctx, 'thread', threadId) : null)
   const globalPolicy = policies?.global ?? await loadScopePolicy(ctx, 'global', null)
-  for (const { layer, policy } of [
-    { layer: 'thread', policy: threadPolicy },
-    { layer: 'global', policy: globalPolicy }
-  ]) {
-    if (!policy) continue
-    const entry = entryFromPolicy(policy, name)
+
+  // 1) 对话级最高：本对话显式设置优先于一切。
+  if (threadPolicy) {
+    const entry = entryFromPolicy(threadPolicy, name)
     if (entry) {
       return {
         enabled: entry.state === 'enabled',
-        source: layer,
+        source: 'thread',
         reason: entry.meta?.reason || null,
         updatedAt: entry.meta?.updatedAt || null,
         policySource: entry.meta?.source || null
       }
     }
   }
+
+  // 2) 自动对话作用域：只要该 Skill 在任一对话被显式启用过，
+  //    它在其他未显式配置的对话里默认关闭，不再继承 global。
+  const scoped = threadScopedSkills ?? await collectThreadScopedSkills(ctx)
+  if (scoped.has(name)) {
+    return {
+      enabled: false,
+      source: 'thread-scope',
+      reason: 'conversation-scoped: enabled in another conversation; off here by default',
+      updatedAt: null,
+      policySource: null
+    }
+  }
+
+  // 3) global 显式设置（未进入对话作用域的 Skill 才回退到 global）。
+  const globalEntry = entryFromPolicy(globalPolicy, name)
+  if (globalEntry) {
+    return {
+      enabled: globalEntry.state === 'enabled',
+      source: 'global',
+      reason: globalEntry.meta?.reason || null,
+      updatedAt: globalEntry.meta?.updatedAt || null,
+      policySource: globalEntry.meta?.source || null
+    }
+  }
+
+  // 4) 旧版手动“对话级默认”分类（兼容历史数据）。
   const threadDefault = threadDefaultEntry(globalPolicy, name)
   if (threadDefault?.thread === 'disabled' || threadDefault?.thread === 'enabled') {
     const state = threadDefault.thread
@@ -291,12 +337,15 @@ export async function resolveEffective(ctx, { skill, threadId = null, policies =
       policySource: threadDefault.source || null
     }
   }
+
+  // 5) 完全未配置：默认启用。
   return { enabled: true, source: 'default', reason: 'no explicit policy', updatedAt: null, policySource: null }
 }
 
 export async function resolveAllEffective(ctx, { threadId = null, skillNames = [] }) {
   const globalPolicy = await loadScopePolicy(ctx, 'global', null)
   const threadPolicy = threadId ? await loadScopePolicy(ctx, 'thread', threadId) : null
+  const threadScopedSkills = await collectThreadScopedSkills(ctx)
   const policies = { global: globalPolicy, thread: threadPolicy }
   const names = new Set(skillNames.map((value) => normalizeSkillName(value)))
   for (const policy of [globalPolicy, threadPolicy]) {
@@ -306,7 +355,7 @@ export async function resolveAllEffective(ctx, { threadId = null, skillNames = [
   }
   const skills = {}
   for (const name of names) {
-    skills[name] = await resolveEffective(ctx, { skill: name, threadId, policies })
+    skills[name] = await resolveEffective(ctx, { skill: name, threadId, policies, threadScopedSkills })
   }
   return { skills, policies }
 }

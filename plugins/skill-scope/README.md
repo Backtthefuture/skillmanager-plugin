@@ -3,9 +3,10 @@
 Skill Scope 是一个完全独立的 Codex 插件，用于管理本地 Agent Skill：
 
 - **两层作用域**：`global`（全局常开）与 `thread`（对话级，自动读取 `CODEX_THREAD_ID`）；
-  优先级 `thread > global`，未配置继承，默认启用，显式关闭优先。
-- **对话级分类（默认关闭）**：把任意 Skill 设为“对话级”后，它在所有对话中默认禁用，
-  只有显式开启（thread 或 global）才启动；取消分类恢复默认启用。
+  优先级 `thread > global`；未配置时回退到 global（对话作用域 Skill 除外），
+  默认启用，显式关闭优先。
+- **自动对话作用域**：在某个对话（thread 层）显式开启的 Skill，只在该对话运行；
+  其他对话默认关闭，不继承 global；清除 thread 开关后恢复原默认。
 - **直接开关**：MCP/CLI 直接启用/禁用任意受管 Skill；默认先出计划，确认后生效，可回滚。
 - **删除/恢复**：受管 Skill 可删除（先移入 `$DATA_DIR/trash/`）并随时恢复。
 - **SkillsMP**：一键打开 https://skillsmp.com；从 SkillsMP 页面 / GitHub 仓库 / `owner/repo`
@@ -35,8 +36,8 @@ codex plugin add skill-scope@backtthefuture
 | `list_skill_scopes` | global/thread 两层策略 |
 | `get_skill_policy` | 单 Skill 指定层策略与最终状态、来源 |
 | `set_skill_enabled` | 开关 Skill；默认落到当前对话（thread），无 thread id 时回退 global 并警告 |
-| `reset_skill_scope` | 重置单 Skill 或整层为继承 |
-| `set_skill_default` | 设为/取消“对话级”分类：`disabled`（对话级默认关闭）、`inherit`（取消） |
+| `reset_skill_scope` | 移除单 Skill 或整层显式配置 |
+| `set_skill_default` | （旧版兼容）手动设置/取消 thread 默认分类；新版本无需使用 |
 | `get_active_skills` | 当前对话白名单（守护 Skill 调用） |
 | `delete_skill` | 删除受管 Skill（默认 preview；`preview:false` 执行，移入 trash） |
 | `restore_skill` | 从 trash 恢复 Skill 及原策略/符号链接 |
@@ -53,8 +54,6 @@ skill-scope status
 skill-scope policy list
 skill-scope policy enable --scope global --skill my-skill --apply
 skill-scope policy disable --scope thread --skill my-skill --apply   # 自动用 CODEX_THREAD_ID
-skill-scope policy default --skill my-skill --state disabled --apply # 设为对话级（默认关闭）
-skill-scope policy default --skill my-skill --state inherit --apply  # 取消分类
 skill-scope policy reset --scope thread --skill my-skill --apply
 skill-scope skill list
 skill-scope skill delete my-skill --apply

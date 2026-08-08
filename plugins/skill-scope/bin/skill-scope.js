@@ -105,7 +105,8 @@ Usage:
   skill-scope help
 
 Thread scope uses --thread or the CODEX_THREAD_ID environment variable.
-Policy writes default to preview; add --apply/--yes to execute.`
+Policy writes default to preview; add --apply/--yes to execute.
+policy default is a legacy manual classification; enabling a Skill in a thread now auto-scopes it.`
 }
 
 async function run(command, subcommand, positional, options) {

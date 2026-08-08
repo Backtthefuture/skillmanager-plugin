@@ -148,16 +148,7 @@ a { color: inherit; text-decoration: none; }
 .scope-control button:hover:not(:disabled) { color: var(--text-soft); background: #1e293b; }
 .scope-control button.active-on { background: #052e1633; color: var(--green); border-color: #166534; }
 .scope-control button.active-off { background: #450a0a33; color: var(--red); border-color: #7f1d1d; }
-.scope-control button.active-inherit { background: #1e1b4b33; color: #a5b4fc; border-color: #4f46e5; }
 .scope-control button:disabled { opacity: .35; cursor: not-allowed; }
-.default-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.default-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-.default-control { display: inline-flex; gap: 3px; background: #020617; border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
-.default-control button { border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 7px; }
-.default-control button:hover { color: var(--text-soft); background: #1e293b; }
-.default-control button.active { background: #1e1b4b33; color: #a5b4fc; border-color: #4f46e5; }
-.default-control button.conversation.active { background: #450a0a33; color: var(--red); border-color: #7f1d1d; }
-.default-control button.plain.active { background: #052e1633; color: var(--green); border-color: #166534; }
 .card-actions { display: flex; gap: 6px; justify-content: flex-end; }
 
 .panel-head { margin-bottom: 12px; }

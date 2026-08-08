@@ -140,7 +140,7 @@ const TOOLS = [
   {
     name: 'set_skill_default',
     title: 'Set Skill Thread Default',
-    description: 'Set a Skill as conversation-level: it defaults to disabled in every thread and only runs after an explicit thread (or global) enable. Use thread_default=inherit to unclassify it back to normal. thread_default=enabled is kept for legacy data only.',
+    description: 'Legacy manual thread-default classification. New behavior auto-scopes any Skill enabled in a thread (it only runs there), so this tool is kept only for compatibility; thread_default=inherit removes a legacy classification.',
     inputSchema: {
       type: 'object',
       properties: {

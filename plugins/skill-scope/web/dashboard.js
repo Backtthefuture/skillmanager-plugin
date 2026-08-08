@@ -70,7 +70,7 @@ function sourceLabel(source) {
 }
 
 function effectiveSourceLabel(source) {
-  return { global: 'global', thread: 'thread', default: 'global', 'thread-default': '对话级' }[source] || source
+  return { global: 'global', thread: 'thread', default: 'global', 'thread-default': '对话级', 'thread-scope': '对话作用域' }[source] || source
 }
 
 function scopeTarget() {
@@ -170,6 +170,9 @@ function filteredSkills() {
 
 function effectiveBadge(skill) {
   const eff = skill.effective
+  if (eff.source === 'thread-scope') {
+    return `<span class="eff-badge disabled" title="该 Skill 已在其他对话开启，默认只在那里的对话运行；本对话未显式开启">禁用<span class="eff-source">· 对话作用域</span></span>`
+  }
   if (eff.source === 'thread-default') {
     if (eff.enabled) {
       return `<span class="eff-badge enabled" title="分类为对话级默认启用；thread/global 显式配置优先">默认启用<span class="eff-source">· 对话级</span></span>`
@@ -180,9 +183,9 @@ function effectiveBadge(skill) {
     return `<span class="eff-badge default" title="未显式配置，默认启用">默认启用<span class="eff-source">· global</span></span>`
   }
   if (eff.enabled) {
-    return `<span class="eff-badge enabled" title="最终状态：thread > global，显式关闭优先">启用<span class="eff-source">· ${esc(effectiveSourceLabel(eff.source))}</span></span>`
+    return `<span class="eff-badge enabled" title="最终状态：thread > global；对话专属 Skill 默认关闭">启用<span class="eff-source">· ${esc(effectiveSourceLabel(eff.source))}</span></span>`
   }
-  return `<span class="eff-badge disabled" title="最终状态：thread > global，显式关闭优先">禁用<span class="eff-source">· ${esc(effectiveSourceLabel(eff.source))}</span></span>`
+  return `<span class="eff-badge disabled" title="最终状态：thread > global；对话专属 Skill 默认关闭">禁用<span class="eff-source">· ${esc(effectiveSourceLabel(eff.source))}</span></span>`
 }
 
 function scopeControl(skill) {
@@ -190,18 +193,10 @@ function scopeControl(skill) {
   const explicit = skill.scopeState?.state || 'inherit'
   const active = (target) => explicit === target ? ` active-${target}` : ''
   const disabled = ready ? '' : 'disabled'
+  const layerName = state.scope === 'thread' ? '本对话' : '全局'
   return `<div class="scope-control" role="group" aria-label="当前作用域开关">
-    <button data-action="set" data-enabled="true" data-skill="${esc(skill.name)}" class="on${active('enabled')}" ${disabled} title="在本层显式启用">开</button>
-    <button data-action="set" data-enabled="false" data-skill="${esc(skill.name)}" class="off${active('disabled')}" ${disabled} title="在本层显式禁用（优先于启用）">关</button>
-    <button data-action="reset" data-skill="${esc(skill.name)}" class="inherit${active('inherit')}" ${disabled} title="移除本层显式配置，继承上层">继承</button>
-  </div>`
-}
-
-function defaultControl(skill) {
-  const conversationLevel = skill.threadDefault === 'disabled'
-  return `<div class="default-control" role="group" aria-label="对话级分类">
-    <button data-default="disabled" data-skill="${esc(skill.name)}" class="conversation${conversationLevel ? ' active' : ''}" title="设为对话级：所有对话默认关闭，只有在本对话显式开启才运行">对话级（默认关）</button>
-    <button data-default="inherit" data-skill="${esc(skill.name)}" class="plain${!conversationLevel ? ' active' : ''}" title="取消对话级分类：恢复为未配置时默认启用">普通</button>
+    <button data-action="set" data-enabled="true" data-skill="${esc(skill.name)}" class="on${active('enabled')}" ${disabled} title="在${layerName}显式启用">开</button>
+    <button data-action="set" data-enabled="false" data-skill="${esc(skill.name)}" class="off${active('disabled')}" ${disabled} title="在${layerName}显式禁用">关</button>
   </div>`
 }
 
@@ -230,10 +225,6 @@ function skillCard(skill) {
     <div class="effective-row">
       ${effectiveBadge(skill)}
       ${scopeControl(skill)}
-    </div>
-    <div class="default-row">
-      <span class="default-label">对话级分类</span>
-      ${defaultControl(skill)}
     </div>
     <div class="card-actions">${deleteButton}</div>
   </article>`
@@ -288,8 +279,8 @@ function renderPlan(plan, warnings = []) {
   $('plan-title').textContent = `${plan.changes.length} 项变更 · 影响 ${affected} 个 Skill`
   const changes = (plan.changes || []).map((change) => {
     if (change.kind === 'policy') {
-      const target = change.action === 'set' ? (change.enabled ? '启用' : '禁用') : '重置为继承'
-      const from = change.before?.enabled ? '启用' : change.before?.disabled ? '禁用' : '继承'
+      const target = change.action === 'set' ? (change.enabled ? '启用' : '禁用') : '移除本层显式配置'
+      const from = change.before?.enabled ? '启用' : change.before?.disabled ? '禁用' : '未配置'
       return `<div class="plan-change"><span class="tag policy">策略</span> <span class="mono">${esc(change.skill)}</span>：${from} → ${target}（${esc(change.scope)}）</div>`
     }
     if (change.kind === 'default') {
@@ -442,17 +433,12 @@ function renderScopePanel() {
     return
   }
   const policies = data.policies
-  const chips = (names, scope, threadId) => names.map((name) => `<span class="chip">${esc(name)}<button class="chip-reset" data-reset-chip="${esc(name)}" data-scope="${esc(scope)}" data-thread="${esc(threadId || '')}" title="重置为继承">✕</button></span>`).join('') || '<span class="small">（无）</span>'
-  const defaultChips = (list) => list.map((entry) => `<span class="chip">${esc(entry.skill)}<button class="chip-reset" data-reset-default="${esc(entry.skill)}" title="取消对话级分类">✕</button></span>`).join('') || '<span class="small">（无）</span>'
+  const chips = (names, scope, threadId) => names.map((name) => `<span class="chip">${esc(name)}<button class="chip-reset" data-reset-chip="${esc(name)}" data-scope="${esc(scope)}" data-thread="${esc(threadId || '')}" title="移除本层显式配置">✕</button></span>`).join('') || '<span class="small">（无）</span>'
   box.innerHTML = `
     <div class="scope-section">
       <h3>global · 全局常开</h3>
       <div class="chip-row"><span class="small">启用：</span>${chips(policies.global.enabled, 'global', '')}</div>
       <div class="chip-row" style="margin-top:8px"><span class="small">禁用：</span>${chips(policies.global.disabled, 'global', '')}</div>
-    </div>
-    <div class="scope-section">
-      <h3>global · 对话级 Skill（默认关闭）</h3>
-      <div class="chip-row"><span class="small">对话级：</span>${defaultChips(policies.global.defaults.filter((entry) => entry.thread === 'disabled'))}</div>
     </div>
     <div class="scope-section">
       <h3>thread · 对话级（当前：${esc(state.thread || '未提供')}）</h3>
@@ -602,13 +588,6 @@ function handleGridClick(event) {
     void openPlan(operationsFor([skill], action, enabled))
     return
   }
-  const defaultButton = event.target.closest('[data-default]')
-  if (defaultButton) {
-    const skill = defaultButton.dataset.skill
-    const threadDefault = defaultButton.dataset.default
-    void openPlan([{ action: 'default', scope: 'global', skill, threadDefault }])
-    return
-  }
   const deleteButton = event.target.closest('[data-delete]')
   if (deleteButton) {
     void deleteSkill(deleteButton.dataset.delete)
@@ -638,11 +617,6 @@ document.addEventListener('click', (event) => {
   const resetChip = event.target.closest('[data-reset-chip]')
   if (resetChip) {
     void openPlan([{ action: 'reset', scope: resetChip.dataset.scope, target: resetChip.dataset.thread || null, skill: resetChip.dataset.resetChip }])
-    return
-  }
-  const resetDefault = event.target.closest('[data-reset-default]')
-  if (resetDefault) {
-    void openPlan([{ action: 'default', scope: 'global', skill: resetDefault.dataset.resetDefault, threadDefault: 'inherit' }])
     return
   }
   const viewLink = event.target.closest('[data-view]')
