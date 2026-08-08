@@ -1,0 +1,47 @@
+{
+  "name": "skill-scope",
+  "version": "0.1.0+codex.20260808040500",
+  "description": "Standalone Skill scope control for Codex: global/thread toggles, delete/restore, and SkillsMP installation.",
+  "author": {
+    "name": "Backtthefuture",
+    "url": "https://github.com/Backtthefuture"
+  },
+  "homepage": "https://backtthefuture.github.io/skillmanager-plugin/",
+  "repository": "https://github.com/Backtthefuture/skillmanager-plugin",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "codex",
+    "scope",
+    "policy",
+    "skillsmp",
+    "symlinks",
+    "rollback"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Skill Scope",
+    "shortDescription": "Global/thread Skill scoping + SkillsMP installs",
+    "longDescription": "Skill Scope is a standalone Codex plugin for local Agent Skill management: global always-on and conversation-level scoping (thread > global), direct enable/disable, reversible deletion with trash, one-click installation from SkillsMP or GitHub, and a local 127.0.0.1 Dashboard for full Skill control, recovery, and auditing.",
+    "developerName": "Backtthefuture",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://backtthefuture.github.io/skillmanager-plugin/",
+    "privacyPolicyURL": "https://backtthefuture.github.io/skillmanager-plugin/privacy.html",
+    "termsOfServiceURL": "https://backtthefuture.github.io/skillmanager-plugin/terms.html",
+    "brandColor": "#FACC15",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "logoDark": "./assets/logo-dark.png",
+    "defaultPrompt": [
+      "\u6253\u5f00 SkillsMP \u4e0b\u8f7d Skill",
+      "\u5b89\u88c5\u8fd9\u4e2a Skill\uff1a<url>",
+      "\u7981\u7528\u5f53\u524d\u5bf9\u8bdd\u91cc\u7684\u67d0\u4e2a Skill"
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

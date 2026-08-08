@@ -1,0 +1,32 @@
+{
+  "name": "skill-scope",
+  "version": "0.1.0",
+  "description": "Skill Scope - standalone Codex plugin for global/thread Skill scoping, delete/restore, and SkillsMP installation",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "author": {
+    "name": "Backtthefuture",
+    "url": "https://github.com/Backtthefuture"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Backtthefuture/skillmanager.git"
+  },
+  "homepage": "https://github.com/Backtthefuture/skillmanager#readme",
+  "keywords": [
+    "skill-scope",
+    "codex",
+    "skills",
+    "scope",
+    "policy",
+    "skillsmp"
+  ],
+  "bin": {
+    "skill-scope": "bin/skill-scope.js",
+    "skill-scope-mcp": "bin/skill-scope-mcp.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

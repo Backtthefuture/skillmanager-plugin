@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "marketplace": "backtthefuture",
+  "plugin": "skill-scope",
+  "version": "0.1.0",
+  "builtAt": "2026-08-07T04:00:00.000Z",
+  "source": {
+    "packageVersion": "0.1.0",
+    "gitCommit": "6d93acc",
+    "dirty": true,
+    "treeHash": "local-skill-scope-standalone"
+  }
+}
