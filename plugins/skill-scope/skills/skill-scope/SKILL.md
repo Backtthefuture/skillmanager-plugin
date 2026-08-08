@@ -9,8 +9,9 @@ skill-scope 是一个独立的 Codex 插件，通过 MCP 工具与 CLI 管理本
 
 - 两层作用域：`global`（全局常开）与 `thread`（对话级，自动读取 `CODEX_THREAD_ID`）；
   优先级 `thread > global`，未配置继承，默认启用，显式关闭优先。
-- 对话级默认关闭：把 Skill 分类为“对话级默认关”后，它在所有对话中默认禁用，
-  只有显式开启（thread 或 global）才启动；分类记录在全局策略的 `defaults` 中。
+- 对话级分类：把 Skill 设为“对话级”后，它在所有对话中默认关闭，只有显式开启
+  （thread 或 global）才启动；取消分类即恢复默认启用。分类记录在全局策略的
+  `defaults` 中。
 - 直接开关：`set_skill_enabled` / `reset_skill_scope`（默认先出计划，确认后执行）。
 - 删除/恢复：`delete_skill`（移入 trash，可回滚）与 `restore_skill`。
 - SkillsMP：`open_skillsmp` 打开市场；`install_from_skillsmp` 从 SkillsMP 页面、
@@ -21,7 +22,7 @@ skill-scope 是一个独立的 Codex 插件，通过 MCP 工具与 CLI 管理本
 1. 先 `get_status` 或 `list_skills` 了解当前 Skill 库与生效状态。
 2. 开关 Skill：`set_skill_enabled({ skill, enabled })`，默认落到当前对话
    （thread 层）；想全局生效时传 `scope: "global"`。
-3. 对话级默认关闭：`set_skill_default({ skill, thread_default: "disabled" })`，
+3. 设为对话级（默认关闭）：`set_skill_default({ skill, thread_default: "disabled" })`，
    之后该 Skill 在未显式开启的对话中保持禁用；用 `thread_default: "inherit"` 取消分类。
 4. 下载 Skill：`open_skillsmp` 打开市场；拿到页面或 GitHub 地址后调用
    `install_from_skillsmp({ source })`。

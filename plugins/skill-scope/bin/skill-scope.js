@@ -88,7 +88,7 @@ Usage:
   skill-scope policy list [--json]
   skill-scope policy status --skill <skill> [--scope global|thread] [--thread <id>] [--json]
   skill-scope policy enable|disable --scope global|thread --skill <skill> [--thread <id>] [--reason <text>] [--apply|--yes]
-  skill-scope policy default --skill <skill> --state disabled|enabled|inherit [--reason <text>] [--apply|--yes]
+  skill-scope policy default --skill <skill> --state disabled|inherit [--reason <text>] [--apply|--yes]
   skill-scope policy reset --scope <scope> [--skill <skill>|--all] [--thread <id>] [--apply|--yes]
   skill-scope skill list [--json]
   skill-scope skill delete <name> [--apply|--yes]

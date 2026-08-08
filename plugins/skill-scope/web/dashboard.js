@@ -198,11 +198,10 @@ function scopeControl(skill) {
 }
 
 function defaultControl(skill) {
-  const state = skill.threadDefault === 'disabled' ? 'disabled' : skill.threadDefault === 'enabled' ? 'enabled' : 'inherit'
-  return `<div class="default-control" role="group" aria-label="对话级默认">
-    <button data-default="disabled" data-skill="${esc(skill.name)}" class="default-off${state === 'disabled' ? ' active' : ''}" title="分类为对话级默认关闭：所有对话默认禁用，只有显式开启才启动">默认关</button>
-    <button data-default="enabled" data-skill="${esc(skill.name)}" class="default-on${state === 'enabled' ? ' active' : ''}" title="分类为对话级默认启用">默认开</button>
-    <button data-default="inherit" data-skill="${esc(skill.name)}" class="default-inherit${state === 'inherit' ? ' active' : ''}" title="移除分类，未配置时默认启用">继承</button>
+  const conversationLevel = skill.threadDefault === 'disabled'
+  return `<div class="default-control" role="group" aria-label="对话级分类">
+    <button data-default="disabled" data-skill="${esc(skill.name)}" class="conversation${conversationLevel ? ' active' : ''}" title="设为对话级：所有对话默认关闭，只有在本对话显式开启才运行">对话级（默认关）</button>
+    <button data-default="inherit" data-skill="${esc(skill.name)}" class="plain${!conversationLevel ? ' active' : ''}" title="取消对话级分类：恢复为未配置时默认启用">普通</button>
   </div>`
 }
 
@@ -233,7 +232,7 @@ function skillCard(skill) {
       ${scopeControl(skill)}
     </div>
     <div class="default-row">
-      <span class="default-label">对话级默认</span>
+      <span class="default-label">对话级分类</span>
       ${defaultControl(skill)}
     </div>
     <div class="card-actions">${deleteButton}</div>
@@ -294,7 +293,7 @@ function renderPlan(plan, warnings = []) {
       return `<div class="plan-change"><span class="tag policy">策略</span> <span class="mono">${esc(change.skill)}</span>：${from} → ${target}（${esc(change.scope)}）</div>`
     }
     if (change.kind === 'default') {
-      const target = change.action === 'reset-default' ? '移除对话级默认分类' : `设为对话级默认${change.threadDefault === 'disabled' ? '关' : '开'}`
+      const target = change.action === 'reset-default' ? '取消对话级分类' : '设为对话级（默认关闭）'
       return `<div class="plan-change"><span class="tag default">默认</span> <span class="mono">${esc(change.skill)}</span>：${target}</div>`
     }
     if (change.kind === 'link') {
@@ -444,7 +443,7 @@ function renderScopePanel() {
   }
   const policies = data.policies
   const chips = (names, scope, threadId) => names.map((name) => `<span class="chip">${esc(name)}<button class="chip-reset" data-reset-chip="${esc(name)}" data-scope="${esc(scope)}" data-thread="${esc(threadId || '')}" title="重置为继承">✕</button></span>`).join('') || '<span class="small">（无）</span>'
-  const defaultChips = (list) => list.map((entry) => `<span class="chip">${esc(entry.skill)}<button class="chip-reset" data-reset-default="${esc(entry.skill)}" title="移除对话级默认分类">✕</button></span>`).join('') || '<span class="small">（无）</span>'
+  const defaultChips = (list) => list.map((entry) => `<span class="chip">${esc(entry.skill)}<button class="chip-reset" data-reset-default="${esc(entry.skill)}" title="取消对话级分类">✕</button></span>`).join('') || '<span class="small">（无）</span>'
   box.innerHTML = `
     <div class="scope-section">
       <h3>global · 全局常开</h3>
@@ -452,9 +451,8 @@ function renderScopePanel() {
       <div class="chip-row" style="margin-top:8px"><span class="small">禁用：</span>${chips(policies.global.disabled, 'global', '')}</div>
     </div>
     <div class="scope-section">
-      <h3>global · 对话级默认分类</h3>
-      <div class="chip-row"><span class="small">默认关闭：</span>${defaultChips(policies.global.defaults.filter((entry) => entry.thread === 'disabled'))}</div>
-      <div class="chip-row" style="margin-top:8px"><span class="small">默认启用：</span>${defaultChips(policies.global.defaults.filter((entry) => entry.thread === 'enabled'))}</div>
+      <h3>global · 对话级 Skill（默认关闭）</h3>
+      <div class="chip-row"><span class="small">对话级：</span>${defaultChips(policies.global.defaults.filter((entry) => entry.thread === 'disabled'))}</div>
     </div>
     <div class="scope-section">
       <h3>thread · 对话级（当前：${esc(state.thread || '未提供')}）</h3>

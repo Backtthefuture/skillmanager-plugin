@@ -31,10 +31,10 @@ description: 由 skill-scope 插件提供的对话级守护 Skill。当对话涉
 ## 生效规则（两层 + 对话级默认）
 
 - 优先级：`thread > global > 对话级默认分类`。
-- thread 未配置时继承 global；global 未配置时，若该 Skill 被标记为
-  “对话级默认关闭”则默认禁用，否则默认启用。
+- thread 未配置时继承 global；global 未配置时，若该 Skill 被分类为对话级
+  （默认关闭）则默认禁用，否则默认启用。
 - 显式关闭优先于显式启用。
-- 标记为对话级默认关闭的 Skill 不会出现在 `enabled` 数组，只有显式开启
+- 被分类为对话级的 Skill 默认不会出现在 `enabled` 数组，只有显式开启
   （thread/global）后才会加入。
 - 只使用返回结果 `enabled` 数组中的 Skill；`disabled` 中的 Skill 不得调用，
   不得以其流程作答，也不得绕道读取其 `SKILL.md`。
